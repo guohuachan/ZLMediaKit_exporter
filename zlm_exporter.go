@@ -134,6 +134,8 @@ var (
 	StreamReaderCount      = newMetricDescr(Namespace, SubsystemStream, "reader_count", "Stream reader count", []string{"vhost", "app", "stream", "schema"})
 	StreamTotalReaderCount = newMetricDescr(Namespace, SubsystemStream, "total_reader_count", "Total reader count across all schemas", []string{"vhost", "app", "stream"})
 	StreamBitrate          = newMetricDescr(Namespace, SubsystemStream, "bitrate", "Stream bitrate", []string{"vhost", "app", "stream", "schema"})
+	StreamaliveSecond      = newMetricDescr(Namespace, SubsystemStream, "alive_second", "Stream alive second", []string{"vhost", "app", "stream", "schema"})
+	StreamCreateStamp      = newMetricDescr(Namespace, SubsystemStream, "create_stamp", "Stream create stamp", []string{"vhost", "app", "stream", "schema"})
 	StreamTotal            = newMetricDescr(Namespace, SubsystemStream, "total", "Total number of streams", []string{})
 
 	// rtp metrics
@@ -559,6 +561,7 @@ type APIStreamInfoObj struct {
 	AliveSecond      int     `json:"aliveSecond"`
 	App              string  `json:"app"`
 	BytesSpeed       float64 `json:"bytesSpeed"`
+	CreateStamp      int     `json:"createStamp"`
 	OriginType       int     `json:"originType"`
 	OriginTypeStr    string  `json:"originTypeStr"`
 	OriginUrl        string  `json:"originUrl"`
@@ -618,6 +621,19 @@ func (e *Exporter) extractStream(ctx context.Context, ch chan<- prometheus.Metri
 				prometheus.GaugeValue,
 				stream.BytesSpeed,
 				stream.Vhost, stream.App, stream.Stream, stream.Schema)
+
+			// stream alive second
+			ch <- prometheus.MustNewConstMetric(StreamaliveSecond,
+				prometheus.GaugeValue,
+				float64(stream.AliveSecond),
+				stream.Vhost, stream.App, stream.Stream, stream.Schema)
+
+			// stream create stamp
+			ch <- prometheus.MustNewConstMetric(StreamCreateStamp,
+				prometheus.GaugeValue,
+				float64(stream.CreateStamp),
+				stream.Vhost, stream.App, stream.Stream, stream.Schema)
+
 			// todo: 增加一个zlm_stream_bytes 字段，表示流的总流量
 		}
 

@@ -377,6 +377,13 @@ func TestMetricsRegistration(t *testing.T) {
 	if StreamTotalReaderCount == nil {
 		t.Error("StreamTotalReaderCount metric not initialized")
 	}
+	if StreamaliveSecond == nil {
+		t.Error("StreamaliveSecond metric not initialized")
+	}
+	if StreamCreateStamp == nil {
+		t.Error("StreamCreateStamp metric not initialized")
+	}
+
 }
 
 func TestNewExporter(t *testing.T) {
@@ -871,7 +878,7 @@ func TestExtractStreamInfo(t *testing.T) {
 	}
 	<-done
 
-	assert.Equal(t, 11, len(metrics))
+	assert.Equal(t, 15, len(metrics))
 	teardown()
 }
 
