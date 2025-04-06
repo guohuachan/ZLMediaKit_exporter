@@ -1,6 +1,6 @@
 # ZLMediaKit Prometheus Exporter
 
-![zlm_exporter](https://socialify.git.ci/standchan/ZLMediaKit_exporter/image?language=1&owner=1&name=1&stargazers=1&theme=Light)
+![zlm_exporter](https://socialify.git.ci/guohuachan/ZLMediaKit_exporter/image?language=1&owner=1&name=1&stargazers=1&theme=Light)
 
 简体中文 | [English](./README_EN.md)
 
@@ -8,10 +8,10 @@
 
 通过 ZLMediaKit 的 API 收集指标，并暴露为 Prometheus 指标。
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/standchan/zlm_exporter)](https://goreportcard.com/report/github.com/standchan/zlm_exporter)
-[![](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/standchan/zlm_exporter/blob/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/guohuachan/ZLMediaKit_exporter)](https://goreportcard.com/report/github.com/guohuachan/ZLMediaKit_exporter)
+[![](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/guohuachan/ZLMediaKit_exporter/blob/master/LICENSE)
 [![](https://img.shields.io/badge/language-golang-red.svg)](https://en.cppreference.com/)
-[![](https://img.shields.io/badge/PRs-welcome-yellow.svg)](https://github.com/standchan/zlm_exporter/pulls)
+[![](https://img.shields.io/badge/PRs-welcome-yellow.svg)](hhttps://github.com/guohuachan/ZLMediaKit_exporter/pulls)
 
 ## Grafana DEMO
 ![Grafana DEMO](./www/grafana_demo.png)
@@ -31,7 +31,7 @@ http://1.15.33.150:3000/d/adwaoe6v5tkw0a/zlmediakit
 
 ```shell
 ## 拉取镜像或者构建镜像
-docker pull standchan2024/zlm_exporter:latest
+docker pull zlmexporter/zlmexporter:latest
 # OR
 make build-image
 
@@ -39,7 +39,7 @@ make build-image
 docker run --rm --name zlm_exporter -p 9101:9101 \
   -e ZLM_API_URL=<zlmediakit_api_uri> \
   -e ZLM_API_SECRET=<zlmediakit_api_secret> \
-  standchan2024/zlm_exporter:latest
+  zlmexporter/zlmexporter:latest
 
 ## 获取指标
 curl http://localhost:9101/metrics
@@ -47,7 +47,7 @@ curl http://localhost:9101/metrics
 
 ### 源代码
 ```shell
-git clone https://github.com/standchan/ZLMediaKit_exporter
+git clone https://github.com/guohuachan/ZLMediaKit_exporter
 cd ZLMediaKit_exporter
 ## 构建
 make build

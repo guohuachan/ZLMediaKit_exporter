@@ -1,4 +1,4 @@
-module github.com/standchan/zlm_exporter
+module github.com/guohuachan/ZLMediaKit_exporter
 
 go 1.22
 

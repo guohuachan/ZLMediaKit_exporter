@@ -9,7 +9,7 @@ on:
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  IMAGE_NAME: standchan2024/zlmexporter
+  IMAGE_NAME: zlmexporter/zlmexporter
 
 jobs:
   build-and-push:
