@@ -102,6 +102,8 @@ curl http://localhost:9101/metrics
 | `zlm_stream_reader_count`                | vhost、app、stream、schema         | 流读取器计数              |
 | `zlm_stream_total_reader_count`          | vhost、app、stream         | 所有 schema 中的总读取器计数 |
 | `zlm_stream_bitrate`                     | vhost、app、stream、schema         | 流比特率                  |
+| `zlm_stream_alive_second`                | vhost、app、stream、schema         | 流存活时间                  |
+| `zlm_stream_create_stamp`                | vhost、app、stream、schema         | 流创建时间                  |
 | `zlm_stream_total`                       | {}                                | 流总数         |
 | `zlm_rtp_server_info`                    | port、stream_id         | RTP 服务器信息                  |
 | `zlm_rtp_server_total`                   | {}                                | RTP 服务器总数         |
