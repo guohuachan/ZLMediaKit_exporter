@@ -300,8 +300,8 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 }
 
 type ZLMAPIResponseData interface {
-	[]string | APIVersionObject | APINetworkThreadsObjects | APIWorkThreadsObjects |
-		APIStreamInfoObjects | APIStatisticsObject | APISessionObjects | APIRtpServerObjects
+	[]string | APIVersionObj | APINetworkThreadsObjs | APIWorkThreadsObjs |
+		APIStreamInfoObjs | APIStatisticsObj | APISessionObjs | APIRtpServerObjs
 }
 
 type ZLMAPIResponse[T ZLMAPIResponseData] struct {
@@ -382,7 +382,7 @@ func (e *Exporter) fetchHTTP(ctx context.Context, ch chan<- prometheus.Metric, e
 	}
 }
 
-type APIVersionObject struct {
+type APIVersionObj struct {
 	BranchName string `json:"branchName"`
 	BuildTime  string `json:"buildTime"`
 	CommitHash string `json:"commitHash"`
@@ -390,7 +390,7 @@ type APIVersionObject struct {
 
 func (e *Exporter) extractVersion(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APIVersionObject]
+		var apiResponse ZLMAPIResponse[APIVersionObj]
 		if err := e.processAPIResponse(ZlmAPIEndpointVersion, body, &apiResponse); err != nil {
 			return err
 		}
@@ -419,16 +419,16 @@ func (e *Exporter) extractAPIStatus(ctx context.Context, ch chan<- prometheus.Me
 	e.fetchHTTP(ctx, ch, ZlmAPIEndpointGetApiList, processFunc)
 }
 
-type APINetworkThreadsObject struct {
+type APINetworkThreadsObj struct {
 	Load  float64 `json:"load"`
 	Delay float64 `json:"delay"`
 }
 
-type APINetworkThreadsObjects []APINetworkThreadsObject
+type APINetworkThreadsObjs []APINetworkThreadsObj
 
 func (e *Exporter) extractNetworkThreads(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APINetworkThreadsObjects]
+		var apiResponse ZLMAPIResponse[APINetworkThreadsObjs]
 		if err := e.processAPIResponse(ZlmAPIEndpointGetNetworkThreads, body, &apiResponse); err != nil {
 			return err
 		}
@@ -447,16 +447,16 @@ func (e *Exporter) extractNetworkThreads(ctx context.Context, ch chan<- promethe
 	e.fetchHTTP(ctx, ch, ZlmAPIEndpointGetNetworkThreads, processFunc)
 }
 
-type APIWorkThreadsObject struct {
+type APIWorkThreadsObj struct {
 	Load  float64 `json:"load"`
 	Delay float64 `json:"delay"`
 }
 
-type APIWorkThreadsObjects []APIWorkThreadsObject
+type APIWorkThreadsObjs []APIWorkThreadsObj
 
 func (e *Exporter) extractWorkThreads(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APIWorkThreadsObjects]
+		var apiResponse ZLMAPIResponse[APIWorkThreadsObjs]
 		if err := e.processAPIResponse(ZlmAPIEndpointGetWorkThreads, body, &apiResponse); err != nil {
 			return err
 		}
@@ -474,7 +474,7 @@ func (e *Exporter) extractWorkThreads(ctx context.Context, ch chan<- prometheus.
 	e.fetchHTTP(ctx, ch, ZlmAPIEndpointGetWorkThreads, processFunc)
 }
 
-type APIStatisticsObject struct {
+type APIStatisticsObj struct {
 	Buffer                float64 `json:"Buffer"`
 	BufferLikeString      float64 `json:"BufferLikeString"`
 	BufferList            float64 `json:"BufferList"`
@@ -495,7 +495,7 @@ type APIStatisticsObject struct {
 
 func (e *Exporter) extractStatistics(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APIStatisticsObject]
+		var apiResponse ZLMAPIResponse[APIStatisticsObj]
 		if err := e.processAPIResponse(ZlmAPIEndpointGetStatistics, body, &apiResponse); err != nil {
 			return err
 		}
@@ -521,7 +521,7 @@ func (e *Exporter) extractStatistics(ctx context.Context, ch chan<- prometheus.M
 	e.fetchHTTP(ctx, ch, ZlmAPIEndpointGetStatistics, processFunc)
 }
 
-type APISessionObject struct {
+type APISessionObj struct {
 	Id         string `json:"id"`
 	Identifier string `json:"identifier"`
 	LocalIp    string `json:"local_ip"`
@@ -531,11 +531,11 @@ type APISessionObject struct {
 	TypeID     string `json:"typeid"`
 }
 
-type APISessionObjects []APISessionObject
+type APISessionObjs []APISessionObj
 
 func (e *Exporter) extractSession(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APISessionObjects]
+		var apiResponse ZLMAPIResponse[APISessionObjs]
 		if err := e.processAPIResponse(ZlmAPIEndpointGetAllSession, body, &apiResponse); err != nil {
 			return err
 		}
@@ -555,7 +555,7 @@ func (e *Exporter) extractSession(ctx context.Context, ch chan<- prometheus.Metr
 	e.fetchHTTP(ctx, ch, ZlmAPIEndpointGetAllSession, processFunc)
 }
 
-type APIStreamInfoObject struct {
+type APIStreamInfoObj struct {
 	AliveSecond      int     `json:"aliveSecond"`
 	App              string  `json:"app"`
 	BytesSpeed       float64 `json:"bytesSpeed"`
@@ -569,14 +569,14 @@ type APIStreamInfoObject struct {
 	Vhost            string  `json:"vhost"`
 }
 
-type APIStreamInfoObjects []APIStreamInfoObject
+type APIStreamInfoObjs []APIStreamInfoObj
 
 // Streams with the same stream name represent the same source stream,
 // while schema indicates the specific protocol.
 // ZLMediaKit automatically pushes the source stream to multiple protocols (schemas) by default.
 func (e *Exporter) extractStream(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APIStreamInfoObjects]
+		var apiResponse ZLMAPIResponse[APIStreamInfoObjs]
 		if err := e.processAPIResponse(ZlmAPIEndpointGetMediaList, body, &apiResponse); err != nil {
 			return err
 		}
@@ -630,16 +630,16 @@ func (e *Exporter) extractStream(ctx context.Context, ch chan<- prometheus.Metri
 	e.fetchHTTP(ctx, ch, ZlmAPIEndpointGetMediaList, processFunc)
 }
 
-type APIRtpServerObject struct {
+type APIRtpServerObj struct {
 	Port     string `json:"port"`
 	StreamID string `json:"stream_id"`
 }
 
-type APIRtpServerObjects []APIRtpServerObject
+type APIRtpServerObjs []APIRtpServerObj
 
 func (e *Exporter) extractRtp(ctx context.Context, ch chan<- prometheus.Metric) {
 	processFunc := func(body io.ReadCloser) error {
-		var apiResponse ZLMAPIResponse[APIRtpServerObjects]
+		var apiResponse ZLMAPIResponse[APIRtpServerObjs]
 		if err := e.processAPIResponse(ZlmAPIEndpointListRtpServer, body, &apiResponse); err != nil {
 			return err
 		}

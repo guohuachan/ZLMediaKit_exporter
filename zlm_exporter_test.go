@@ -720,10 +720,10 @@ func TestExtractWorkThreads(t *testing.T) {
 }
 
 func TestExtractStatistics(t *testing.T) {
-	mockResponse := ZLMAPIResponse[APIStatisticsObject]{
+	mockResponse := ZLMAPIResponse[APIStatisticsObj]{
 		Code: 0,
 		Msg:  "success",
-		Data: APIStatisticsObject{
+		Data: APIStatisticsObj{
 			Buffer:                100,
 			BufferLikeString:      100,
 			BufferList:            100,
@@ -768,11 +768,11 @@ func TestExtractStatistics(t *testing.T) {
 }
 
 func TestExtractSession(t *testing.T) {
-	mockResponse := ZLMAPIResponse[APISessionObjects]{
+	mockResponse := ZLMAPIResponse[APISessionObjs]{
 		Code: 0,
 		Msg:  "success",
-		Data: APISessionObjects{
-			APISessionObject{
+		Data: APISessionObjs{
+			APISessionObj{
 				Id:         "1111",
 				Identifier: "1111",
 				LocalIp:    "127.0.0.1",
@@ -781,7 +781,7 @@ func TestExtractSession(t *testing.T) {
 				PeerPort:   1111,
 				TypeID:     "1111",
 			},
-			APISessionObject{
+			APISessionObj{
 				Id:         "2222",
 				Identifier: "2222",
 				LocalIp:    "127.0.0.1",
@@ -818,11 +818,11 @@ func TestExtractSession(t *testing.T) {
 }
 
 func TestExtractStreamInfo(t *testing.T) {
-	mockResponse := ZLMAPIResponse[APIStreamInfoObjects]{
+	mockResponse := ZLMAPIResponse[APIStreamInfoObjs]{
 		Code: 0,
 		Msg:  "success",
-		Data: APIStreamInfoObjects{
-			APIStreamInfoObject{
+		Data: APIStreamInfoObjs{
+			APIStreamInfoObj{
 				Stream:           "test1",
 				Vhost:            "test1",
 				App:              "test1",
@@ -835,7 +835,7 @@ func TestExtractStreamInfo(t *testing.T) {
 				ReaderCount:      100,
 				TotalReaderCount: 100,
 			},
-			APIStreamInfoObject{
+			APIStreamInfoObj{
 				Stream:           "test2",
 				Vhost:            "test2",
 				App:              "test2",
@@ -876,15 +876,15 @@ func TestExtractStreamInfo(t *testing.T) {
 }
 
 func TestExtractRtpServer(t *testing.T) {
-	mockResponse := ZLMAPIResponse[APIRtpServerObjects]{
+	mockResponse := ZLMAPIResponse[APIRtpServerObjs]{
 		Code: 0,
 		Msg:  "success",
-		Data: APIRtpServerObjects{
-			APIRtpServerObject{
+		Data: APIRtpServerObjs{
+			APIRtpServerObj{
 				Port:     "1111",
 				StreamID: "1111",
 			},
-			APIRtpServerObject{
+			APIRtpServerObj{
 				Port:     "2222",
 				StreamID: "2222",
 			},
