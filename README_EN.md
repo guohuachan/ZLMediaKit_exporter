@@ -17,7 +17,7 @@ Prometheus exporter for [ZLMediaKit](https://github.com/ZLMediaKit/ZLMediaKit) m
 Demo URL:
 guest/guest
 
-http://1.15.33.150:3000/d/adwaoe6v5tkw0a/zlmediakit
+http://47.96.0.145:3000/d/adwaoe6v5tkw0a1/zlmediakit-new
 
 
 ## Workflow
