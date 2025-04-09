@@ -25,6 +25,16 @@ http://47.96.0.145:3000/d/adwaoe6v5tkw0a1/zlmediakit-new
 ![workflow](./www/workflow.png)
 ## Usage
 
+### Prerequisites
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'zlm_exporter'
+    static_configs:
+      - targets: ['<zlm_exporter_host>:9101']
+```
+
 ### Docker
 
 ```shell
