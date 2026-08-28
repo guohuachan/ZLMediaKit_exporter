@@ -1,0 +1,9 @@
+{
+  "code": 0,
+  "data": [
+    {
+      "port": "10000",
+      "stream_id": "legacy_stream"
+    }
+  ]
+}

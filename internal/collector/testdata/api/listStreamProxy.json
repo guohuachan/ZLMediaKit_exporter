@@ -1,0 +1,38 @@
+{
+  "code": 0,
+  "data": [
+    {
+      "bytesSpeed": 20480,
+      "key": "__defaultVhost__/proxy/camera1",
+      "liveSecs": 3600,
+      "rePullCount": 2,
+      "src": {
+        "app": "proxy",
+        "params": "",
+        "stream": "camera1",
+        "vhost": "__defaultVhost__"
+      },
+      "status": 0,
+      "status_str": "success",
+      "totalBytes": 736280,
+      "totalReaderCount": 3,
+      "tracks": [
+        {
+          "codec_id": 0,
+          "codec_id_name": "H264",
+          "codec_type": 0,
+          "duration": 3600,
+          "fps": 25.0,
+          "frames": 90000,
+          "gop_interval_ms": 2000,
+          "gop_size": 50,
+          "height": 1080,
+          "key_frames": 1800,
+          "ready": true,
+          "width": 1920
+        }
+      ],
+      "url": "rtsp://192.168.1.10:554/live/ch0"
+    }
+  ]
+}

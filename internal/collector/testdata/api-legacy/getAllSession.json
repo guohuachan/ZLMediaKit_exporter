@@ -8,7 +8,6 @@
       "local_port": 80,
       "peer_ip": "127.0.0.1",
       "peer_port": 55394,
-      "type": "tcp",
       "typeid": "mediakit::HttpSession"
     }
   ]

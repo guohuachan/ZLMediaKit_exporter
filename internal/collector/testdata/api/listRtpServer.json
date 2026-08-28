@@ -1,3 +1,23 @@
 {
-  "code": 0
+  "code": 0,
+  "data": [
+    {
+      "app": "rtp",
+      "only_track": 0,
+      "port": 10000,
+      "ssrc": 1234567890,
+      "stream_id": "test_rtp",
+      "tcp_mode": 0,
+      "vhost": "__defaultVhost__"
+    },
+    {
+      "app": "rtp",
+      "only_track": 1,
+      "port": 10002,
+      "ssrc": 987654321,
+      "stream_id": "other_rtp",
+      "tcp_mode": 1,
+      "vhost": "__defaultVhost__"
+    }
+  ]
 }

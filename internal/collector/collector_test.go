@@ -35,26 +35,50 @@ var fixtureNames = []string{
 	"getAllSession",
 	"getMediaList",
 	"listRtpServer",
+	"listStreamProxy",
+	"listStreamPusherProxy",
 }
 
 func testLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
-func readFixture(t *testing.T, name string) []byte {
+// readFixture reads name from the first directory that provides it, so a
+// partial fixture set can override the default one.
+func readFixture(t *testing.T, name string, dirs ...string) []byte {
 	t.Helper()
-	body, err := os.ReadFile(filepath.Join("testdata", "api", name+".json"))
-	require.NoError(t, err)
-	return body
+
+	for _, dir := range dirs {
+		body, err := os.ReadFile(filepath.Join("testdata", dir, name+".json"))
+		if err == nil {
+			return body
+		}
+		require.ErrorIs(t, err, os.ErrNotExist)
+	}
+	t.Fatalf("fixture %q not found in %v", name, dirs)
+	return nil
 }
 
-// newMockZLMServer serves every fixture and rejects requests without the secret.
+// newMockZLMServer serves the current ZLMediaKit fixtures and rejects requests
+// without the secret.
 func newMockZLMServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return newMockZLMServerFrom(t, "api")
+}
+
+// newLegacyMockZLMServer serves the response shapes of older ZLMediaKit builds,
+// falling back to the current fixtures for endpoints that did not change.
+func newLegacyMockZLMServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return newMockZLMServerFrom(t, "api-legacy", "api")
+}
+
+func newMockZLMServerFrom(t *testing.T, dirs ...string) *httptest.Server {
 	t.Helper()
 
 	mux := http.NewServeMux()
 	for _, name := range fixtureNames {
-		payload := readFixture(t, name)
+		payload := readFixture(t, name, dirs...)
 		mux.HandleFunc("/index/api/"+name, func(w http.ResponseWriter, r *http.Request) {
 			if r.Header.Get("secret") != testSecret {
 				http.Error(w, "incorrect secret", http.StatusForbidden)
@@ -370,4 +394,107 @@ func TestCollectWaitsForEveryCollector(t *testing.T) {
 
 	assert.Equal(t, stalling.started.Load(), stalling.finished.Load(),
 		"Collect returned while a collector was still running")
+}
+
+// gatherCollectorText renders one collector's output as exposition text.
+func gatherCollectorText(t *testing.T, c Collector, url string) string {
+	t.Helper()
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(newAdapter(t, c, url))
+	return gatherText(t, reg)
+}
+
+// ZLMediaKit master returns listRtpServer's port as a number and adds the
+// media tuple, ssrc and tcp mode; the old string-typed port broke decoding.
+func TestRtpCollectorReadsMasterShape(t *testing.T) {
+	out := gatherCollectorText(t, rtpCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `zlm_rtp_server_info{app="rtp",port="10000",ssrc="1234567890",stream_id="test_rtp",tcp_mode="0",vhost="__defaultVhost__"} 1`)
+	assert.Contains(t, out, `zlm_rtp_server_info{app="rtp",port="10002",ssrc="987654321",stream_id="other_rtp",tcp_mode="1",vhost="__defaultVhost__"} 1`)
+	assert.Contains(t, out, "zlm_rtp_server_total 2")
+}
+
+func TestStreamCollectorReportsTotalBytes(t *testing.T) {
+	out := gatherCollectorText(t, streamCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `zlm_stream_bytes_total{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 200368`)
+	assert.Contains(t, out, `zlm_stream_bytes_total{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 144761`)
+}
+
+// Recording state belongs to the source stream, not to a schema, so it is
+// reported once per stream.
+func TestStreamCollectorReportsRecordingState(t *testing.T) {
+	out := gatherCollectorText(t, streamCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `zlm_stream_recording{app="live",stream="test",type="hls",vhost="__defaultVhost__"} 1`)
+	assert.Contains(t, out, `zlm_stream_recording{app="live",stream="test",type="mp4",vhost="__defaultVhost__"} 0`)
+}
+
+// Tracks describe the source stream, so they must not be multiplied by the
+// number of schemas the stream is republished under.
+func TestStreamCollectorReportsTracksOncePerStream(t *testing.T) {
+	out := gatherCollectorText(t, streamCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `zlm_stream_track_fps{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 26`)
+	assert.Contains(t, out, `zlm_stream_track_width{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 448`)
+	assert.Contains(t, out, `zlm_stream_track_height{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 960`)
+	assert.Contains(t, out, `zlm_stream_track_gop_size{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 21`)
+	assert.Contains(t, out, `zlm_stream_track_sample_rate{app="live",codec_name="mpeg4-generic",codec_type="audio",stream="test",track_index="0",vhost="__defaultVhost__"} 44100`)
+	assert.Contains(t, out, `zlm_stream_track_channels{app="live",codec_name="mpeg4-generic",codec_type="audio",stream="test",track_index="0",vhost="__defaultVhost__"} 1`)
+
+	assert.Equal(t, 1, strings.Count(out, "zlm_stream_track_fps{"), "tracks must be reported once per stream, not per schema")
+}
+
+func TestSessionCollectorReportsTransportType(t *testing.T) {
+	out := gatherCollectorText(t, sessionCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `type="tcp"`)
+}
+
+func TestStreamProxyCollector(t *testing.T) {
+	out := gatherCollectorText(t, streamProxyCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `zlm_stream_proxy_info{app="proxy",key="__defaultVhost__/proxy/camera1",status_str="success",stream="camera1",url="rtsp://192.168.1.10:554/live/ch0",vhost="__defaultVhost__"} 1`)
+	assert.Contains(t, out, `zlm_stream_proxy_status{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 0`)
+	assert.Contains(t, out, `zlm_stream_proxy_live_seconds{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 3600`)
+	assert.Contains(t, out, `zlm_stream_proxy_repull_total{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 2`)
+	assert.Contains(t, out, `zlm_stream_proxy_bytes_per_second{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 20480`)
+	assert.Contains(t, out, `zlm_stream_proxy_bytes_total{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 736280`)
+	assert.Contains(t, out, "zlm_stream_proxy_total 1")
+}
+
+func TestStreamPusherProxyCollector(t *testing.T) {
+	out := gatherCollectorText(t, streamPusherCollector{}, newMockZLMServer(t).URL)
+
+	assert.Contains(t, out, `zlm_stream_pusher_info{app="live",key="__defaultVhost__/live/test",stream="test",url="rtmp://cdn.example.com/live/test",vhost="__defaultVhost__"} 1`)
+	assert.Contains(t, out, `zlm_stream_pusher_republish_total{app="live",key="__defaultVhost__/live/test",stream="test",vhost="__defaultVhost__"} 1`)
+	assert.Contains(t, out, `zlm_stream_pusher_bytes_total{app="live",key="__defaultVhost__/live/test",stream="test",vhost="__defaultVhost__"} 276480`)
+	assert.Contains(t, out, "zlm_stream_pusher_total 1")
+}
+
+// Older ZLMediaKit builds omit the newer fields and quoted the RTP port.
+// Scraping them must still succeed rather than fail to decode.
+func TestCollectorsAcceptLegacyResponses(t *testing.T) {
+	srv := newLegacyMockZLMServer(t)
+
+	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
+	require.NoError(t, err)
+
+	for _, c := range exporter.collectors {
+		t.Run(c.Endpoint(), func(t *testing.T) {
+			client, err := zlmapi.NewClient(srv.URL, testSecret, zlmapi.Options{})
+			require.NoError(t, err)
+
+			ch := make(chan prometheus.Metric, 256)
+			err = c.Collect(context.Background(), client, ch)
+			close(ch)
+			collectAll(ch)
+
+			assert.NoError(t, err)
+		})
+	}
+
+	out := gatherCollectorText(t, rtpCollector{}, srv.URL)
+	assert.Contains(t, out, `port="10000"`, "a string-typed port must still decode")
 }

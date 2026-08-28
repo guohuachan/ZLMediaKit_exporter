@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	rtpServerInfo  = newMetricDescr(SubsystemRtp, "server_info", "RTP server info", []string{"port", "stream_id"})
+	rtpServerInfo = newMetricDescr(SubsystemRtp, "server_info", "RTP server info",
+		[]string{"vhost", "app", "stream_id", "port", "ssrc", "tcp_mode"})
 	rtpServerTotal = newMetricDescr(SubsystemRtp, "server_total", "Total number of RTP servers", []string{})
 )
 
@@ -29,7 +30,8 @@ func (rtpCollector) Collect(ctx context.Context, client *zlmapi.Client, ch chan<
 	}
 
 	for _, s := range data {
-		ch <- prometheus.MustNewConstMetric(rtpServerInfo, prometheus.GaugeValue, 1, s.Port, s.StreamID)
+		ch <- prometheus.MustNewConstMetric(rtpServerInfo, prometheus.GaugeValue, 1,
+			s.Vhost, s.App, s.StreamID, s.Port.String(), s.SSRC.String(), s.TCPMode.String())
 	}
 	ch <- prometheus.MustNewConstMetric(rtpServerTotal, prometheus.GaugeValue, float64(len(data)))
 	return nil
