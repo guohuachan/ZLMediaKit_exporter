@@ -19,3 +19,12 @@
 
 # Go workspace file
 go.work
+
+# Build output
+/zlm_exporter
+coverage.html
+
+# Editor / OS noise
+.DS_Store
+.codegraph/
+/ZLMediaKit_exporter
