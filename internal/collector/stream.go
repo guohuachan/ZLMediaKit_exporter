@@ -55,7 +55,7 @@ func (streamCollector) Collect(ctx context.Context, client *zlmapi.Client, ch ch
 		if !uniqueStreamKeys[streamKey] {
 			ch <- prometheus.MustNewConstMetric(streamTotalReaderCount, prometheus.GaugeValue,
 				float64(stream.TotalReaderCount),
-				stream.App, stream.Stream, stream.Vhost)
+				stream.Vhost, stream.App, stream.Stream)
 			uniqueStreamKeys[streamKey] = true
 		}
 

@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
+	"time"
 )
 
 // SuccessCode is the value ZLMediaKit puts in "code" when a call succeeded.
@@ -31,8 +31,14 @@ const (
 
 // Options tunes the HTTP transport used to reach ZLMediaKit.
 type Options struct {
-	// SSLVerify mirrors the historical --web.ssl-verify flag.
-	SSLVerify bool
+	// Timeout bounds a single API request. Zero means no client-side limit,
+	// leaving the caller's context as the only deadline.
+	Timeout time.Duration
+
+	// InsecureSkipVerify disables TLS certificate verification. It is off by
+	// default: an exporter that silently accepts any certificate is worse than
+	// one that refuses to start.
+	InsecureSkipVerify bool
 }
 
 // Client talks to a single ZLMediaKit API server.
@@ -52,10 +58,13 @@ func NewClient(baseURL, secret string, opts Options) (*Client, error) {
 	}
 
 	c := &Client{baseURL: baseURL, secret: secret}
-	if opts.SSLVerify {
-		c.http.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // preserved semantics, fixed separately
-		}
+	c.http.Timeout = opts.Timeout
+	if opts.InsecureSkipVerify {
+		// Clone rather than build a bare Transport, so proxy support, timeouts
+		// and connection pooling keep their standard-library defaults.
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // opt-in via --zlm.tls-insecure-skip-verify
+		c.http.Transport = transport
 	}
 	return c, nil
 }
@@ -83,16 +92,12 @@ func Get[T any](ctx context.Context, c *Client, endpoint string) (T, error) {
 	var zero T
 
 	uri := fmt.Sprintf("%s/%s", c.baseURL, endpoint)
-	parsedURL, err := url.Parse(uri)
-	if err != nil {
-		return zero, fmt.Errorf("error parsing URL %q: %w", uri, err)
-	}
 
-	req := &http.Request{
-		Method: http.MethodGet,
-		URL:    parsedURL,
-		Header: http.Header{"secret": []string{c.secret}},
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return zero, fmt.Errorf("error building request for %q: %w", uri, err)
 	}
+	req.Header.Set("secret", c.secret)
 
 	res, err := c.http.Do(req)
 	if err != nil {

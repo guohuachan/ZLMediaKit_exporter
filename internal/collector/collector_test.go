@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -242,7 +244,7 @@ func TestMustNewConstMetric(t *testing.T) {
 		{name: "float64", value: float64(123.45)},
 		{name: "numeric string", value: "123.45"},
 		{name: "non-numeric string", value: "abc"},
-		{name: "unsupported type", value: struct{}{}, shouldBeNil: true},
+		{name: "unsupported type", value: struct{}{}},
 	}
 
 	for _, tt := range tests {
@@ -280,4 +282,92 @@ func collectAll(ch <-chan prometheus.Metric) []prometheus.Metric {
 		out = append(out, m)
 	}
 	return out
+}
+
+// collectorAdapter exposes one Collector as a prometheus.Collector so the
+// testutil comparison helpers can be used on it.
+type collectorAdapter struct {
+	collector Collector
+	client    *zlmapi.Client
+}
+
+func (a collectorAdapter) Describe(ch chan<- *prometheus.Desc) { a.collector.Describe(ch) }
+
+func (a collectorAdapter) Collect(ch chan<- prometheus.Metric) {
+	_ = a.collector.Collect(context.Background(), a.client, ch)
+}
+
+func newAdapter(t *testing.T, c Collector, url string) collectorAdapter {
+	t.Helper()
+	client, err := zlmapi.NewClient(url, testSecret, zlmapi.Options{})
+	require.NoError(t, err)
+	return collectorAdapter{collector: c, client: client}
+}
+
+// Bug: the label values were passed as (app, stream, vhost) while the
+// descriptor declares (vhost, app, stream), scrambling every series.
+func TestStreamTotalReaderCountLabelsMatchDescriptor(t *testing.T) {
+	srv := newMockZLMServer(t)
+
+	const expected = `
+# HELP zlm_stream_total_reader_count Total reader count across all schemas
+# TYPE zlm_stream_total_reader_count gauge
+zlm_stream_total_reader_count{app="live",stream="test",vhost="__defaultVhost__"} 0
+`
+	err := testutil.CollectAndCompare(
+		newAdapter(t, streamCollector{}, srv.URL),
+		strings.NewReader(expected),
+		"zlm_stream_total_reader_count",
+	)
+	assert.NoError(t, err)
+}
+
+// Bug: the scrape error counter was created but never registered, so failures
+// were invisible on /metrics.
+func TestScrapeErrorsAreExposed(t *testing.T) {
+	srv := newStaticServer(t, `{"code":1,"msg":"error"}`)
+
+	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
+	require.NoError(t, err)
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(exporter)
+
+	assert.Contains(t, gatherText(t, reg), `zlm_scrape_errors_total{endpoint="index/api/version"} 1`)
+}
+
+// stallingCollector runs past the scrape deadline without watching the
+// context, the way a collector blocked inside a slow syscall would.
+type stallingCollector struct {
+	delay    time.Duration
+	started  atomic.Int64
+	finished atomic.Int64
+}
+
+func (*stallingCollector) Endpoint() string                 { return "test/stalling" }
+func (*stallingCollector) Describe(chan<- *prometheus.Desc) {}
+
+func (c *stallingCollector) Collect(context.Context, *zlmapi.Client, chan<- prometheus.Metric) error {
+	c.started.Add(1)
+	time.Sleep(c.delay)
+	c.finished.Add(1)
+	return nil
+}
+
+// Bug: on timeout scrape() returned while its goroutines were still running,
+// so a late send raced with the closing of the metric channel.
+func TestCollectWaitsForEveryCollector(t *testing.T) {
+	exporter, err := New("http://127.0.0.1:1", testSecret, testLogger(), zlmapi.Options{})
+	require.NoError(t, err)
+
+	stalling := &stallingCollector{delay: 300 * time.Millisecond}
+	exporter.collectors = []Collector{stalling}
+	exporter.scrapeTimeout = 50 * time.Millisecond
+
+	ch := make(chan prometheus.Metric, 16)
+	exporter.Collect(ch)
+	close(ch)
+
+	assert.Equal(t, stalling.started.Load(), stalling.finished.Load(),
+		"Collect returned while a collector was still running")
 }

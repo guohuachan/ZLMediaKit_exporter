@@ -3,6 +3,7 @@ package collector
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"sync"
@@ -26,8 +27,8 @@ const (
 	SubsystemRtp            = "rtp"
 )
 
-// scrapeTimeout bounds a single /metrics scrape across all collectors.
-const scrapeTimeout = 12 * time.Second
+// defaultScrapeTimeout bounds a single /metrics scrape across all collectors.
+const defaultScrapeTimeout = 12 * time.Second
 
 // A Collector scrapes one ZLMediaKit API endpoint and turns it into metrics.
 type Collector interface {
@@ -45,6 +46,8 @@ type Exporter struct {
 	log        *slog.Logger
 	mutex      sync.RWMutex
 
+	scrapeTimeout time.Duration
+
 	up           prometheus.Gauge
 	totalScrapes prometheus.Counter
 	scrapeErrors *prometheus.CounterVec
@@ -57,9 +60,10 @@ func New(uri, secret string, logger *slog.Logger, options zlmapi.Options) (*Expo
 		return nil, err
 	}
 
-	return &Exporter{
-		client: client,
-		log:    logger,
+	e := &Exporter{
+		client:        client,
+		log:           logger,
+		scrapeTimeout: defaultScrapeTimeout,
 		collectors: []Collector{
 			versionCollector{},
 			apiStatusCollector{},
@@ -88,7 +92,14 @@ func New(uri, secret string, logger *slog.Logger, options zlmapi.Options) (*Expo
 			Name:      "scrape_errors_total",
 			Help:      "Number of errors while scraping ZLMediaKit.",
 		}, []string{"endpoint"}),
-	}, nil
+	}
+
+	// Materialise one series per endpoint so a rate() over the counter has a
+	// zero baseline instead of no data until the first failure.
+	for _, c := range e.collectors {
+		e.scrapeErrors.WithLabelValues(c.Endpoint())
+	}
+	return e, nil
 }
 
 // Describe implements prometheus.Collector.
@@ -98,6 +109,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	}
 	ch <- e.up.Desc()
 	ch <- e.totalScrapes.Desc()
+	e.scrapeErrors.Describe(ch)
 }
 
 // Collect implements prometheus.Collector.
@@ -108,12 +120,13 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	up := e.scrape(ch)
 	ch <- prometheus.MustNewConstMetric(e.up.Desc(), prometheus.GaugeValue, up)
 	ch <- e.totalScrapes
+	e.scrapeErrors.Collect(ch)
 }
 
 func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 	e.totalScrapes.Inc()
 
-	ctx, cancel := context.WithTimeout(context.Background(), scrapeTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), e.scrapeTimeout)
 	defer cancel()
 
 	var wg sync.WaitGroup
@@ -128,19 +141,15 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) (up float64) {
 		}(c)
 	}
 
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
+	// Wait unconditionally. Returning at the deadline would leave collectors
+	// running and sending on a metric channel that Collect has already closed.
+	wg.Wait()
 
-	select {
-	case <-ctx.Done():
-		e.log.Error("scrape timeout", "error", ctx.Err())
+	if err := ctx.Err(); err != nil {
+		e.log.Error("scrape timeout", "err", err)
 		return 0
-	case <-done:
-		return 1
 	}
+	return 1
 }
 
 // newMetricDescr builds a metric descriptor under the exporter's namespace.
@@ -150,7 +159,8 @@ func newMetricDescr(subsystem, metricName, docString string, labels []string) *p
 
 // mustNewConstMetric accepts either a float64 or a numeric string. A string
 // that does not parse yields the value 1, which keeps info-style metrics
-// usable; any other type yields nil.
+// usable. Any other type yields an invalid metric rather than nil, so that
+// sending the result on the collection channel can never panic.
 func mustNewConstMetric(desc *prometheus.Desc, valueType prometheus.ValueType, value interface{}, labelValues ...string) prometheus.Metric {
 	switch vt := value.(type) {
 	case float64:
@@ -162,6 +172,6 @@ func mustNewConstMetric(desc *prometheus.Desc, valueType prometheus.ValueType, v
 		}
 		return prometheus.MustNewConstMetric(desc, valueType, 1, labelValues...)
 	default:
-		return nil
+		return prometheus.NewInvalidMetric(desc, fmt.Errorf("unsupported metric value type %T", value))
 	}
 }

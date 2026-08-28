@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -114,4 +115,64 @@ func TestGetUnreachableServer(t *testing.T) {
 
 	_, err = Get[Version](context.Background(), c, EndpointVersion)
 	assert.Error(t, err)
+}
+
+// Bug: the request was built by hand and never carried the caller's context,
+// so the scrape timeout had no effect on a hung ZLMediaKit.
+func TestGetHonorsContextDeadline(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+		_, _ = w.Write([]byte(`{"code":0,"msg":"success","data":{}}`))
+	}))
+	defer srv.Close()
+
+	c, err := NewClient(srv.URL, testSecret, Options{})
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	_, err = Get[Version](ctx, c, EndpointVersion)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Less(t, time.Since(start), 400*time.Millisecond, "Get should abort at the deadline")
+}
+
+// Bug: --web.timeout was parsed but never applied to the HTTP client.
+func TestClientTimeoutBoundsRequest(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+		_, _ = w.Write([]byte(`{"code":0,"msg":"success","data":{}}`))
+	}))
+	defer srv.Close()
+
+	c, err := NewClient(srv.URL, testSecret, Options{Timeout: 20 * time.Millisecond})
+	require.NoError(t, err)
+
+	start := time.Now()
+	_, err = Get[Version](context.Background(), c, EndpointVersion)
+
+	assert.Error(t, err)
+	assert.Less(t, time.Since(start), 400*time.Millisecond, "the client timeout should abort the request")
+}
+
+// Bug: the TLS option was inverted, so the default configuration silently
+// accepted any certificate.
+func TestTLSCertificateIsVerifiedByDefault(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"code":0,"msg":"success","data":{"branchName":"master"}}`))
+	}))
+	defer srv.Close()
+
+	verifying, err := NewClient(srv.URL, testSecret, Options{})
+	require.NoError(t, err)
+	_, err = Get[Version](context.Background(), verifying, EndpointVersion)
+	assert.Error(t, err, "a self-signed certificate must be rejected by default")
+
+	skipping, err := NewClient(srv.URL, testSecret, Options{InsecureSkipVerify: true})
+	require.NoError(t, err)
+	_, err = Get[Version](context.Background(), skipping, EndpointVersion)
+	assert.NoError(t, err, "InsecureSkipVerify must accept a self-signed certificate")
 }
