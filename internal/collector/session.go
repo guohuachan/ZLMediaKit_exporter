@@ -11,7 +11,7 @@ import (
 
 var (
 	sessionInfo = newMetricDescr(SubsystemSession, "info", "Session info",
-		[]string{"id", "identifier", "local_ip", "local_port", "peer_ip", "peer_port", "typeid"})
+		[]string{"id", "identifier", "local_ip", "local_port", "peer_ip", "peer_port", "typeid", "type"})
 	sessionTotal = newMetricDescr(SubsystemSession, "total", "Total number of sessions", []string{})
 )
 
@@ -32,7 +32,7 @@ func (sessionCollector) Collect(ctx context.Context, client *zlmapi.Client, ch c
 
 	for _, s := range data {
 		ch <- prometheus.MustNewConstMetric(sessionInfo, prometheus.GaugeValue, 1,
-			s.ID, s.Identifier, s.LocalIP, strconv.Itoa(s.LocalPort), s.PeerIP, strconv.Itoa(s.PeerPort), s.TypeID)
+			s.ID, s.Identifier, s.LocalIP, strconv.Itoa(s.LocalPort), s.PeerIP, strconv.Itoa(s.PeerPort), s.TypeID, s.Type)
 	}
 	ch <- prometheus.MustNewConstMetric(sessionTotal, prometheus.GaugeValue, float64(len(data)))
 	return nil

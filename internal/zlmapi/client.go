@@ -27,6 +27,9 @@ const (
 	EndpointGetAllSession      = "index/api/getAllSession"
 	EndpointGetMediaList       = "index/api/getMediaList"
 	EndpointListRtpServer      = "index/api/listRtpServer"
+
+	EndpointListStreamProxy       = "index/api/listStreamProxy"
+	EndpointListStreamPusherProxy = "index/api/listStreamPusherProxy"
 )
 
 // Options tunes the HTTP transport used to reach ZLMediaKit.

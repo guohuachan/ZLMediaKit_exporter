@@ -24,6 +24,8 @@ const (
 	SubsystemStatistics     = "statistics"
 	SubsystemSession        = "session"
 	SubsystemStream         = "stream"
+	SubsystemStreamProxy    = "stream_proxy"
+	SubsystemStreamPusher   = "stream_pusher"
 	SubsystemRtp            = "rtp"
 )
 
@@ -72,6 +74,8 @@ func New(uri, secret string, logger *slog.Logger, options zlmapi.Options) (*Expo
 			statisticsCollector{},
 			sessionCollector{},
 			streamCollector{},
+			streamProxyCollector{},
+			streamPusherCollector{},
 			rtpCollector{},
 		},
 
