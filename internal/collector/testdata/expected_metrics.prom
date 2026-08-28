@@ -66,6 +66,16 @@ zlm_network_threads_total 8
 # HELP zlm_rtp_server_total Total number of RTP servers
 # TYPE zlm_rtp_server_total gauge
 zlm_rtp_server_total 0
+# HELP zlm_scrape_errors_total Number of errors while scraping ZLMediaKit.
+# TYPE zlm_scrape_errors_total counter
+zlm_scrape_errors_total{endpoint="index/api/getAllSession"} 0
+zlm_scrape_errors_total{endpoint="index/api/getApiList"} 0
+zlm_scrape_errors_total{endpoint="index/api/getMediaList"} 0
+zlm_scrape_errors_total{endpoint="index/api/getStatistic"} 0
+zlm_scrape_errors_total{endpoint="index/api/getThreadsLoad"} 0
+zlm_scrape_errors_total{endpoint="index/api/getWorkThreadsLoad"} 0
+zlm_scrape_errors_total{endpoint="index/api/listRtpServer"} 0
+zlm_scrape_errors_total{endpoint="index/api/version"} 0
 # HELP zlm_session_info Session info
 # TYPE zlm_session_info gauge
 zlm_session_info{id="177-77",identifier="177-77",local_ip="127.0.0.1",local_port="80",peer_ip="127.0.0.1",peer_port="55394",typeid="mediakit::HttpSession"} 1
@@ -161,7 +171,7 @@ zlm_stream_status{app="live",schema="ts",stream="test",vhost="__defaultVhost__"}
 zlm_stream_total 1
 # HELP zlm_stream_total_reader_count Total reader count across all schemas
 # TYPE zlm_stream_total_reader_count gauge
-zlm_stream_total_reader_count{app="test",stream="__defaultVhost__",vhost="live"} 0
+zlm_stream_total_reader_count{app="live",stream="test",vhost="__defaultVhost__"} 0
 # HELP zlm_up Was the last scrape of ZLMediaKit successful.
 # TYPE zlm_up gauge
 zlm_up 1

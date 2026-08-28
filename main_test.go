@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -108,4 +110,16 @@ func TestMaskSecret(t *testing.T) {
 			assert.Equal(t, tt.expected, maskSecret(tt.secret))
 		})
 	}
+}
+
+// Bug: the startup banner passed printf-style arguments to slog, which renders
+// them as !BADKEY pairs instead of structured fields.
+func TestLogBuildInfoUsesStructuredAttributes(t *testing.T) {
+	var buf bytes.Buffer
+	logBuildInfo(slog.New(slog.NewTextHandler(&buf, nil)))
+
+	out := buf.String()
+	assert.NotContains(t, out, "!BADKEY")
+	assert.Contains(t, out, "go_version=")
+	assert.Contains(t, out, "version=")
 }
