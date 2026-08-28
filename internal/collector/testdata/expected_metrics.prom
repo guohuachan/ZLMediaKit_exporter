@@ -1,0 +1,179 @@
+# HELP zlm_api_status The status of API endpoint
+# TYPE zlm_api_status gauge
+zlm_api_status{endpoint="/index/"} 1
+zlm_api_status{endpoint="/index/api/addFFmpegSource"} 1
+zlm_api_status{endpoint="/index/api/addStreamProxy"} 1
+zlm_api_status{endpoint="/index/api/addStreamPusherProxy"} 1
+zlm_api_status{endpoint="/index/api/broadcastMessage"} 1
+zlm_api_status{endpoint="/index/api/closeRtpServer"} 1
+zlm_api_status{endpoint="/index/api/close_stream"} 1
+zlm_api_status{endpoint="/index/api/close_streams"} 1
+zlm_api_status{endpoint="/index/api/connectRtpServer"} 1
+zlm_api_status{endpoint="/index/api/delFFmpegSource"} 1
+zlm_api_status{endpoint="/index/api/delStreamProxy"} 1
+zlm_api_status{endpoint="/index/api/delStreamPusherProxy"} 1
+zlm_api_status{endpoint="/index/api/deleteRecordDirectory"} 1
+zlm_api_status{endpoint="/index/api/downloadBin"} 1
+zlm_api_status{endpoint="/index/api/downloadFile"} 1
+zlm_api_status{endpoint="/index/api/getAllSession"} 1
+zlm_api_status{endpoint="/index/api/getApiList"} 1
+zlm_api_status{endpoint="/index/api/getMP4RecordFile"} 1
+zlm_api_status{endpoint="/index/api/getMediaInfo"} 1
+zlm_api_status{endpoint="/index/api/getMediaList"} 1
+zlm_api_status{endpoint="/index/api/getMediaPlayerList"} 1
+zlm_api_status{endpoint="/index/api/getProxyInfo"} 1
+zlm_api_status{endpoint="/index/api/getProxyPusherInfo"} 1
+zlm_api_status{endpoint="/index/api/getRtpInfo"} 1
+zlm_api_status{endpoint="/index/api/getServerConfig"} 1
+zlm_api_status{endpoint="/index/api/getSnap"} 1
+zlm_api_status{endpoint="/index/api/getStatistic"} 1
+zlm_api_status{endpoint="/index/api/getThreadsLoad"} 1
+zlm_api_status{endpoint="/index/api/getWorkThreadsLoad"} 1
+zlm_api_status{endpoint="/index/api/isMediaOnline"} 1
+zlm_api_status{endpoint="/index/api/isRecording"} 1
+zlm_api_status{endpoint="/index/api/kick_session"} 1
+zlm_api_status{endpoint="/index/api/kick_sessions"} 1
+zlm_api_status{endpoint="/index/api/listRtpSender"} 1
+zlm_api_status{endpoint="/index/api/listRtpServer"} 1
+zlm_api_status{endpoint="/index/api/loadMP4File"} 1
+zlm_api_status{endpoint="/index/api/openRtpServer"} 1
+zlm_api_status{endpoint="/index/api/openRtpServerMultiplex"} 1
+zlm_api_status{endpoint="/index/api/pauseRtpCheck"} 1
+zlm_api_status{endpoint="/index/api/restartServer"} 1
+zlm_api_status{endpoint="/index/api/resumeRtpCheck"} 1
+zlm_api_status{endpoint="/index/api/seekRecordStamp"} 1
+zlm_api_status{endpoint="/index/api/setRecordSpeed"} 1
+zlm_api_status{endpoint="/index/api/setServerConfig"} 1
+zlm_api_status{endpoint="/index/api/startRecord"} 1
+zlm_api_status{endpoint="/index/api/startSendRtp"} 1
+zlm_api_status{endpoint="/index/api/startSendRtpPassive"} 1
+zlm_api_status{endpoint="/index/api/stopRecord"} 1
+zlm_api_status{endpoint="/index/api/stopSendRtp"} 1
+zlm_api_status{endpoint="/index/api/updateRtpServerSSRC"} 1
+zlm_api_status{endpoint="/index/api/version"} 1
+# HELP zlm_exporter_scrapes_total Current total ZLMediaKit scrapes.
+# TYPE zlm_exporter_scrapes_total counter
+zlm_exporter_scrapes_total 1
+# HELP zlm_network_threads_delay_total Total of network threads delay
+# TYPE zlm_network_threads_delay_total gauge
+zlm_network_threads_delay_total 0
+# HELP zlm_network_threads_load_total Total of network threads load
+# TYPE zlm_network_threads_load_total gauge
+zlm_network_threads_load_total 0
+# HELP zlm_network_threads_total Total number of network threads
+# TYPE zlm_network_threads_total gauge
+zlm_network_threads_total 8
+# HELP zlm_rtp_server_total Total number of RTP servers
+# TYPE zlm_rtp_server_total gauge
+zlm_rtp_server_total 0
+# HELP zlm_session_info Session info
+# TYPE zlm_session_info gauge
+zlm_session_info{id="177-77",identifier="177-77",local_ip="127.0.0.1",local_port="80",peer_ip="127.0.0.1",peer_port="55394",typeid="mediakit::HttpSession"} 1
+# HELP zlm_session_total Total number of sessions
+# TYPE zlm_session_total gauge
+zlm_session_total 1
+# HELP zlm_statistics_buffer Statistics buffer
+# TYPE zlm_statistics_buffer gauge
+zlm_statistics_buffer 10
+# HELP zlm_statistics_buffer_like_string Statistics BufferLikeString
+# TYPE zlm_statistics_buffer_like_string gauge
+zlm_statistics_buffer_like_string 2
+# HELP zlm_statistics_buffer_list Statistics BufferList
+# TYPE zlm_statistics_buffer_list gauge
+zlm_statistics_buffer_list 0
+# HELP zlm_statistics_buffer_raw Statistics BufferRaw
+# TYPE zlm_statistics_buffer_raw gauge
+zlm_statistics_buffer_raw 8
+# HELP zlm_statistics_frame Statistics Frame
+# TYPE zlm_statistics_frame gauge
+zlm_statistics_frame 0
+# HELP zlm_statistics_frame_imp Statistics FrameImp
+# TYPE zlm_statistics_frame_imp gauge
+zlm_statistics_frame_imp 0
+# HELP zlm_statistics_media_source Statistics MediaSource
+# TYPE zlm_statistics_media_source gauge
+zlm_statistics_media_source 1
+# HELP zlm_statistics_multi_media_source_muxer Statistics MultiMediaSourceMuxer
+# TYPE zlm_statistics_multi_media_source_muxer gauge
+zlm_statistics_multi_media_source_muxer 0
+# HELP zlm_statistics_rtmp_packet Statistics RtmpPacket
+# TYPE zlm_statistics_rtmp_packet gauge
+zlm_statistics_rtmp_packet 0
+# HELP zlm_statistics_rtp_packet Statistics RtpPacket
+# TYPE zlm_statistics_rtp_packet gauge
+zlm_statistics_rtp_packet 0
+# HELP zlm_statistics_socket Statistics Socket
+# TYPE zlm_statistics_socket gauge
+zlm_statistics_socket 58
+# HELP zlm_statistics_tcp_client Statistics TcpClient
+# TYPE zlm_statistics_tcp_client gauge
+zlm_statistics_tcp_client 1
+# HELP zlm_statistics_tcp_server Statistics TcpServer
+# TYPE zlm_statistics_tcp_server gauge
+zlm_statistics_tcp_server 43
+# HELP zlm_statistics_tcp_session Statistics TcpSession
+# TYPE zlm_statistics_tcp_session gauge
+zlm_statistics_tcp_session 1
+# HELP zlm_statistics_udp_server Statistics UdpServer
+# TYPE zlm_statistics_udp_server gauge
+zlm_statistics_udp_server 16
+# HELP zlm_statistics_udp_session Statistics UdpSession
+# TYPE zlm_statistics_udp_session gauge
+zlm_statistics_udp_session 0
+# HELP zlm_stream_alive_second Stream alive second
+# TYPE zlm_stream_alive_second gauge
+zlm_stream_alive_second{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 7
+zlm_stream_alive_second{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 7
+zlm_stream_alive_second{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 7
+zlm_stream_alive_second{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 7
+# HELP zlm_stream_bitrate Stream bitrate
+# TYPE zlm_stream_bitrate gauge
+zlm_stream_bitrate{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 31156
+zlm_stream_bitrate{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 20680
+zlm_stream_bitrate{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 20984
+zlm_stream_bitrate{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 28624
+# HELP zlm_stream_create_stamp Stream create stamp
+# TYPE zlm_stream_create_stamp gauge
+zlm_stream_create_stamp{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+zlm_stream_create_stamp{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+zlm_stream_create_stamp{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+zlm_stream_create_stamp{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+# HELP zlm_stream_info Stream basic information
+# TYPE zlm_stream_info gauge
+zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="fmp4",stream="test",vhost="__defaultVhost__"} 1
+zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1
+zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1
+zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="ts",stream="test",vhost="__defaultVhost__"} 1
+# HELP zlm_stream_reader_count Stream reader count
+# TYPE zlm_stream_reader_count gauge
+zlm_stream_reader_count{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 0
+zlm_stream_reader_count{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 0
+zlm_stream_reader_count{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 0
+zlm_stream_reader_count{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 0
+# HELP zlm_stream_status Stream status (1: active with data flowing, 0: inactive)
+# TYPE zlm_stream_status gauge
+zlm_stream_status{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 1
+zlm_stream_status{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1
+zlm_stream_status{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1
+zlm_stream_status{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 1
+# HELP zlm_stream_total Total number of streams
+# TYPE zlm_stream_total gauge
+zlm_stream_total 1
+# HELP zlm_stream_total_reader_count Total reader count across all schemas
+# TYPE zlm_stream_total_reader_count gauge
+zlm_stream_total_reader_count{app="test",stream="__defaultVhost__",vhost="live"} 0
+# HELP zlm_up Was the last scrape of ZLMediaKit successful.
+# TYPE zlm_up gauge
+zlm_up 1
+# HELP zlm_version_info ZLMediaKit version info.
+# TYPE zlm_version_info gauge
+zlm_version_info{branchName="master",buildTime="2024-06-11T21:28:30",commitHash="c446f6b"} 1
+# HELP zlm_work_threads_delay_total Total of work threads delay
+# TYPE zlm_work_threads_delay_total gauge
+zlm_work_threads_delay_total 40
+# HELP zlm_work_threads_load_total Total of work threads load
+# TYPE zlm_work_threads_load_total gauge
+zlm_work_threads_load_total 100
+# HELP zlm_work_threads_total Total number of work threads
+# TYPE zlm_work_threads_total gauge
+zlm_work_threads_total 8
