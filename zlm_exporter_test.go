@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,81 +17,45 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/gin-gonic/gin"
 )
 
 // most of unittest powered by cursor
 // WIP
 var (
-	MockZlmAPIServerAddr    = "http://localhost:9999"
-	MockZlmAPIServerSecret  = "test-secret"
-	MockZlmAPIServerHandler = gin.Default()
+	MockZlmAPIServerAddr   string
+	MockZlmAPIServerSecret = "test-secret"
+
+	mockZlmAPIServerOnce sync.Once
 )
 
+// mockZlmAPIEndpoints lists the ZLMediaKit API names served by the mock server;
+// each one is backed by the matching fixture under testdata/api.
+var mockZlmAPIEndpoints = []string{
+	"version",
+	"getApiList",
+	"getThreadsLoad",
+	"getWorkThreadsLoad",
+	"getStatistic",
+	"getServerConfig",
+	"getAllSession",
+	"getMediaList",
+	"listRtpServer",
+}
+
 func setup() {
-	setupZlmApiServer()
+	mockZlmAPIServerOnce.Do(setupZlmApiServer)
 }
 
 func setupZlmApiServer() {
-	r := MockZlmAPIServerHandler
-	r.GET("index/api/version", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("version"))
-	})
-
-	r.GET("index/api/getApiList", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getApiList"))
-	})
-
-	r.GET("index/api/getThreadsLoad", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getThreadsLoad"))
-	})
-
-	r.GET("index/api/getWorkThreadsLoad", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getWorkThreadsLoad"))
-	})
-
-	r.GET("index/api/getStatistic", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getStatistic"))
-	})
-
-	r.GET("index/api/getServerConfig", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getServerConfig"))
-	})
-
-	r.GET("index/api/getAllSession", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getAllSession"))
-	})
-
-	r.GET("index/api/getMediaList", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("getMediaList"))
-	})
-
-	r.GET("index/api/listRtpServer", func(c *gin.Context) {
-		c.JSON(http.StatusOK, readTestData("listRtpServer"))
-	})
-
-	go func() {
-		err := r.Run(":9999")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-	startTime := time.Now()
-	timeout := 5 * time.Second
-	for {
-		resp, err := http.Get(MockZlmAPIServerAddr + "/index/api/version")
-		if err == nil && resp.StatusCode == http.StatusOK {
-			resp.Body.Close()
-			break
-		}
-
-		if time.Since(startTime) > timeout {
-			log.Fatalf("Mock ZLM API Server未能在%s内启动", timeout)
-		}
-
-		time.Sleep(100 * time.Millisecond)
+	mux := http.NewServeMux()
+	for _, name := range mockZlmAPIEndpoints {
+		payload := readTestData(name)
+		mux.HandleFunc("/index/api/"+name, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(payload)
+		})
 	}
+	MockZlmAPIServerAddr = httptest.NewServer(mux).URL
 }
 
 func setupTestServer(t *testing.T, endpoint string, response interface{}) *httptest.Server {
