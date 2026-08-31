@@ -592,3 +592,42 @@ func TestThreadsReportedIndividually(t *testing.T) {
 	assert.NotContains(t, out, "zlm_network_threads_load_total")
 	assert.NotContains(t, out, "zlm_work_threads_delay_total")
 }
+
+func TestTrackTypeName(t *testing.T) {
+	tests := []struct {
+		name      string
+		codecType int
+		want      string
+	}{
+		{name: "video", codecType: zlmapi.TrackVideo, want: "video"},
+		{name: "audio", codecType: zlmapi.TrackAudio, want: "audio"},
+		{name: "title", codecType: zlmapi.TrackTitle, want: "title"},
+		{name: "unknown positive", codecType: 99, want: "unknown"},
+		{name: "invalid", codecType: -1, want: "unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, trackTypeName(tt.codecType))
+		})
+	}
+}
+
+func TestNewRejectsIncompleteConfiguration(t *testing.T) {
+	tests := []struct {
+		name   string
+		uri    string
+		secret string
+	}{
+		{name: "empty uri", uri: "", secret: testSecret},
+		{name: "empty secret", uri: "http://localhost", secret: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exporter, err := New(tt.uri, tt.secret, testLogger(), zlmapi.Options{}, Config{})
+			assert.Error(t, err)
+			assert.Nil(t, exporter)
+		})
+	}
+}

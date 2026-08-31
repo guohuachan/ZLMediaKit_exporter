@@ -2,6 +2,7 @@ package zlmapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -175,4 +176,74 @@ func TestTLSCertificateIsVerifiedByDefault(t *testing.T) {
 	require.NoError(t, err)
 	_, err = Get[Version](context.Background(), skipping, EndpointVersion)
 	assert.NoError(t, err, "InsecureSkipVerify must accept a self-signed certificate")
+}
+
+// FlexInt exists because ZLMediaKit has reported listRtpServer's port both as
+// a JSON number and as a quoted string.
+func TestFlexIntAcceptsNumbersAndStrings(t *testing.T) {
+	tests := []struct {
+		name    string
+		json    string
+		want    FlexInt
+		wantErr bool
+	}{
+		{name: "number", json: `10000`, want: 10000},
+		{name: "quoted number", json: `"10000"`, want: 10000},
+		{name: "negative number", json: `-1`, want: -1},
+		{name: "quoted negative number", json: `"-1"`, want: -1},
+		{name: "null", json: `null`, want: 0},
+		{name: "empty string", json: `""`, want: 0},
+		{name: "non-numeric string", json: `"abc"`, wantErr: true},
+		{name: "float", json: `1.5`, wantErr: true},
+		{name: "object", json: `{}`, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got FlexInt
+			err := json.Unmarshal([]byte(tt.json), &got)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestFlexIntString(t *testing.T) {
+	assert.Equal(t, "10000", FlexInt(10000).String())
+	assert.Equal(t, "0", FlexInt(0).String())
+	assert.Equal(t, "-1", FlexInt(-1).String())
+}
+
+// The two RTP server shapes seen in the wild must both decode.
+func TestRtpServerDecodesBothPortShapes(t *testing.T) {
+	var current RtpServer
+	require.NoError(t, json.Unmarshal([]byte(
+		`{"vhost":"__defaultVhost__","app":"rtp","stream_id":"s","port":10000,"ssrc":42,"tcp_mode":1,"only_track":0}`), &current))
+	assert.Equal(t, FlexInt(10000), current.Port)
+	assert.Equal(t, FlexInt(42), current.SSRC)
+	assert.Equal(t, "rtp", current.App)
+
+	var legacy RtpServer
+	require.NoError(t, json.Unmarshal([]byte(`{"port":"10000","stream_id":"s"}`), &legacy))
+	assert.Equal(t, FlexInt(10000), legacy.Port)
+	assert.Equal(t, "s", legacy.StreamID)
+	assert.Empty(t, legacy.App, "fields absent from older responses stay zero")
+}
+
+func TestAPIErrorMessage(t *testing.T) {
+	err := &APIError{Endpoint: EndpointVersion, Code: 1, Msg: "Incorrect secret"}
+	assert.EqualError(t, err,
+		"unexpected API response code from index/api/version: 1, reason: Incorrect secret")
+}
+
+func TestGetRejectsUnbuildableURL(t *testing.T) {
+	c, err := NewClient("http://exam\nple.com", testSecret, Options{})
+	require.NoError(t, err)
+
+	_, err = Get[Version](context.Background(), c, EndpointVersion)
+	assert.ErrorContains(t, err, "error building request")
 }
