@@ -123,3 +123,24 @@ func TestLogBuildInfoUsesStructuredAttributes(t *testing.T) {
 	assert.Contains(t, out, "go_version=")
 	assert.Contains(t, out, "version=")
 }
+
+func TestSplitCollectors(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  []string
+	}{
+		{name: "empty", value: "", want: nil},
+		{name: "single name", value: "rtp", want: []string{"rtp"}},
+		{name: "several names", value: "stream_proxy,stream_pusher", want: []string{"stream_proxy", "stream_pusher"}},
+		{name: "surrounding whitespace", value: " rtp , stream ", want: []string{"rtp", "stream"}},
+		{name: "empty entries are dropped", value: "rtp,,stream,", want: []string{"rtp", "stream"}},
+		{name: "only separators", value: ",, ,", want: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, splitCollectors(tt.value))
+		})
+	}
+}
