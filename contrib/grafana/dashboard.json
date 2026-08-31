@@ -211,7 +211,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zlm_stream_info{} * on(vhost, app, stream, schema) group_left(reader_count, bitrate) \n(\n  zlm_stream_reader_count{} * on(vhost, app, stream, schema) group_left(alive_second, create_stamp) \n  (\n    zlm_stream_alive_second{} * on(vhost, app, stream, schema) group_left \n    zlm_stream_create_stamp{}\n  )\n)",
+          "expr": "zlm_stream_info{} * on(vhost, app, stream, schema) group_left\n(\n  zlm_stream_readers{} * on(vhost, app, stream, schema) group_left\n  (\n    zlm_stream_alive_seconds{} * on(vhost, app, stream, schema) group_left\n    zlm_stream_create_time_seconds{}\n  )\n)",
           "format": "table",
           "instant": true,
           "interval": "",
@@ -435,14 +435,14 @@
             "uid": "ddwan3eq6uqkgb"
           },
           "editorMode": "code",
-          "expr": "zlm_stream_bitrate",
+          "expr": "zlm_stream_bytes_per_second",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Stream Bitrate",
+      "title": "Stream Throughput (B/s)",
       "type": "timeseries"
     },
     {
@@ -532,7 +532,7 @@
             "uid": "ddwan3eq6uqkgb"
           },
           "editorMode": "code",
-          "expr": "zlm_session_total",
+          "expr": "sum(zlm_sessions)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -629,7 +629,7 @@
             "uid": "ddwan3eq6uqkgb"
           },
           "editorMode": "code",
-          "expr": "zlm_network_threads_total",
+          "expr": "zlm_network_threads",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -641,7 +641,7 @@
             "uid": "ddwan3eq6uqkgb"
           },
           "editorMode": "code",
-          "expr": "zlm_work_threads_total",
+          "expr": "zlm_work_threads",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -739,7 +739,7 @@
             "uid": "ddwan3eq6uqkgb"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(zlm_network_threads_load_total[1m]) / avg_over_time(zlm_network_threads_total[1m])",
+          "expr": "avg(avg_over_time(zlm_network_thread_load_percent[1m]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -836,7 +836,7 @@
             "uid": "ddwan3eq6uqkgb"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(zlm_work_threads_load_total[1m]) / avg_over_time(zlm_work_threads_total[1m])",
+          "expr": "avg(avg_over_time(zlm_work_thread_load_percent[1m]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,

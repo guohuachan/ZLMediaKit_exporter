@@ -140,3 +140,24 @@ Exporter 用 `errgroup` 并发执行全部 collector，并**无条件 `Wait()`**
 | 4 | 适配最新 ZLM：类型修复、新字段、新 collector | 新增 |
 | 5 | 指标改名/删除、高基数开关、exporter 自身指标 | 破坏性 |
 | 6 | README / README_CN / Grafana dashboard / MIGRATION.md，打 v1.0.0 | 文档 |
+
+## 实施偏差
+
+实施过程中引入 promlint 门禁（`testutil.CollectAndLint`）后，它给出的
+不合规清单比本设计原先列出的五项改名更长。为避免「修一半」——只清理
+线程指标的 `_total` 后缀却保留流指标的——按同一规则一次改到位：
+
+额外改名：`zlm_stream_total` → `zlm_streams`、`zlm_session_total` →
+`zlm_sessions{typeid,type}`、`zlm_rtp_server_total` → `zlm_rtp_servers`、
+`zlm_stream_proxy_total` → `zlm_stream_proxies`、`zlm_stream_pusher_total`
+→ `zlm_stream_pushers`、`zlm_stream_reader_count` → `zlm_stream_readers`、
+`zlm_stream_total_reader_count` → `zlm_stream_total_readers`、
+`zlm_stream_proxy_total_reader_count` → `zlm_stream_proxy_total_readers`、
+track 的 `_milliseconds` 指标改用 seconds 基本单位、`zlm_version_info`
+的标签由 camelCase 改为 snake_case。
+
+另外 Go 版本下限由计划中的 1.24 变为 1.25.0：prometheus 全家桶
+（client_golang v1.24.1、common v0.70.1、exporter-toolkit v0.19.0）
+的 go.mod 已要求 1.25，无法回退。
+
+完整迁移表见 [MIGRATION.md](../../MIGRATION.md)。
