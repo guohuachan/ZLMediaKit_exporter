@@ -1,93 +1,72 @@
-# HELP zlm_api_status The status of API endpoint
-# TYPE zlm_api_status gauge
-zlm_api_status{endpoint="/index/"} 1
-zlm_api_status{endpoint="/index/api/addFFmpegSource"} 1
-zlm_api_status{endpoint="/index/api/addStreamProxy"} 1
-zlm_api_status{endpoint="/index/api/addStreamPusherProxy"} 1
-zlm_api_status{endpoint="/index/api/broadcastMessage"} 1
-zlm_api_status{endpoint="/index/api/closeRtpServer"} 1
-zlm_api_status{endpoint="/index/api/close_stream"} 1
-zlm_api_status{endpoint="/index/api/close_streams"} 1
-zlm_api_status{endpoint="/index/api/connectRtpServer"} 1
-zlm_api_status{endpoint="/index/api/delFFmpegSource"} 1
-zlm_api_status{endpoint="/index/api/delStreamProxy"} 1
-zlm_api_status{endpoint="/index/api/delStreamPusherProxy"} 1
-zlm_api_status{endpoint="/index/api/deleteRecordDirectory"} 1
-zlm_api_status{endpoint="/index/api/downloadBin"} 1
-zlm_api_status{endpoint="/index/api/downloadFile"} 1
-zlm_api_status{endpoint="/index/api/getAllSession"} 1
-zlm_api_status{endpoint="/index/api/getApiList"} 1
-zlm_api_status{endpoint="/index/api/getMP4RecordFile"} 1
-zlm_api_status{endpoint="/index/api/getMediaInfo"} 1
-zlm_api_status{endpoint="/index/api/getMediaList"} 1
-zlm_api_status{endpoint="/index/api/getMediaPlayerList"} 1
-zlm_api_status{endpoint="/index/api/getProxyInfo"} 1
-zlm_api_status{endpoint="/index/api/getProxyPusherInfo"} 1
-zlm_api_status{endpoint="/index/api/getRtpInfo"} 1
-zlm_api_status{endpoint="/index/api/getServerConfig"} 1
-zlm_api_status{endpoint="/index/api/getSnap"} 1
-zlm_api_status{endpoint="/index/api/getStatistic"} 1
-zlm_api_status{endpoint="/index/api/getThreadsLoad"} 1
-zlm_api_status{endpoint="/index/api/getWorkThreadsLoad"} 1
-zlm_api_status{endpoint="/index/api/isMediaOnline"} 1
-zlm_api_status{endpoint="/index/api/isRecording"} 1
-zlm_api_status{endpoint="/index/api/kick_session"} 1
-zlm_api_status{endpoint="/index/api/kick_sessions"} 1
-zlm_api_status{endpoint="/index/api/listRtpSender"} 1
-zlm_api_status{endpoint="/index/api/listRtpServer"} 1
-zlm_api_status{endpoint="/index/api/loadMP4File"} 1
-zlm_api_status{endpoint="/index/api/openRtpServer"} 1
-zlm_api_status{endpoint="/index/api/openRtpServerMultiplex"} 1
-zlm_api_status{endpoint="/index/api/pauseRtpCheck"} 1
-zlm_api_status{endpoint="/index/api/restartServer"} 1
-zlm_api_status{endpoint="/index/api/resumeRtpCheck"} 1
-zlm_api_status{endpoint="/index/api/seekRecordStamp"} 1
-zlm_api_status{endpoint="/index/api/setRecordSpeed"} 1
-zlm_api_status{endpoint="/index/api/setServerConfig"} 1
-zlm_api_status{endpoint="/index/api/startRecord"} 1
-zlm_api_status{endpoint="/index/api/startSendRtp"} 1
-zlm_api_status{endpoint="/index/api/startSendRtpPassive"} 1
-zlm_api_status{endpoint="/index/api/stopRecord"} 1
-zlm_api_status{endpoint="/index/api/stopSendRtp"} 1
-zlm_api_status{endpoint="/index/api/updateRtpServerSSRC"} 1
-zlm_api_status{endpoint="/index/api/version"} 1
+# HELP zlm_exporter_collector_success Whether the last scrape of a collector succeeded (1: yes, 0: no).
+# TYPE zlm_exporter_collector_success gauge
+zlm_exporter_collector_success{collector="network_threads"} 1
+zlm_exporter_collector_success{collector="rtp"} 1
+zlm_exporter_collector_success{collector="session"} 1
+zlm_exporter_collector_success{collector="statistics"} 1
+zlm_exporter_collector_success{collector="stream"} 1
+zlm_exporter_collector_success{collector="stream_proxy"} 1
+zlm_exporter_collector_success{collector="stream_pusher"} 1
+zlm_exporter_collector_success{collector="version"} 1
+zlm_exporter_collector_success{collector="work_threads"} 1
+# HELP zlm_exporter_scrape_duration_seconds Duration of the last scrape, per collector.
+# TYPE zlm_exporter_scrape_duration_seconds gauge
+zlm_exporter_scrape_duration_seconds{collector="network_threads"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="rtp"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="session"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="statistics"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="stream"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="stream_proxy"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="stream_pusher"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="version"} <duration>
+zlm_exporter_scrape_duration_seconds{collector="work_threads"} <duration>
+# HELP zlm_exporter_scrape_errors_total Number of errors while scraping ZLMediaKit, per collector.
+# TYPE zlm_exporter_scrape_errors_total counter
+zlm_exporter_scrape_errors_total{collector="network_threads"} 0
+zlm_exporter_scrape_errors_total{collector="rtp"} 0
+zlm_exporter_scrape_errors_total{collector="session"} 0
+zlm_exporter_scrape_errors_total{collector="statistics"} 0
+zlm_exporter_scrape_errors_total{collector="stream"} 0
+zlm_exporter_scrape_errors_total{collector="stream_proxy"} 0
+zlm_exporter_scrape_errors_total{collector="stream_pusher"} 0
+zlm_exporter_scrape_errors_total{collector="version"} 0
+zlm_exporter_scrape_errors_total{collector="work_threads"} 0
 # HELP zlm_exporter_scrapes_total Current total ZLMediaKit scrapes.
 # TYPE zlm_exporter_scrapes_total counter
 zlm_exporter_scrapes_total 1
-# HELP zlm_network_threads_delay_total Total of network threads delay
-# TYPE zlm_network_threads_delay_total gauge
-zlm_network_threads_delay_total 0
-# HELP zlm_network_threads_load_total Total of network threads load
-# TYPE zlm_network_threads_load_total gauge
-zlm_network_threads_load_total 0
-# HELP zlm_network_threads_total Total number of network threads
-# TYPE zlm_network_threads_total gauge
-zlm_network_threads_total 8
+# HELP zlm_network_thread_delay_seconds Network thread task delay in seconds
+# TYPE zlm_network_thread_delay_seconds gauge
+zlm_network_thread_delay_seconds{index="0"} 0
+zlm_network_thread_delay_seconds{index="1"} 0
+zlm_network_thread_delay_seconds{index="2"} 0
+zlm_network_thread_delay_seconds{index="3"} 0
+zlm_network_thread_delay_seconds{index="4"} 0
+zlm_network_thread_delay_seconds{index="5"} 0
+zlm_network_thread_delay_seconds{index="6"} 0
+zlm_network_thread_delay_seconds{index="7"} 0
+# HELP zlm_network_thread_load_percent Network thread load in percent
+# TYPE zlm_network_thread_load_percent gauge
+zlm_network_thread_load_percent{index="0"} 0
+zlm_network_thread_load_percent{index="1"} 0
+zlm_network_thread_load_percent{index="2"} 0
+zlm_network_thread_load_percent{index="3"} 0
+zlm_network_thread_load_percent{index="4"} 0
+zlm_network_thread_load_percent{index="5"} 0
+zlm_network_thread_load_percent{index="6"} 0
+zlm_network_thread_load_percent{index="7"} 0
+# HELP zlm_network_threads Number of network (event poller) threads
+# TYPE zlm_network_threads gauge
+zlm_network_threads 8
 # HELP zlm_rtp_server_info RTP server info
 # TYPE zlm_rtp_server_info gauge
 zlm_rtp_server_info{app="rtp",port="10000",ssrc="1234567890",stream_id="test_rtp",tcp_mode="0",vhost="__defaultVhost__"} 1
 zlm_rtp_server_info{app="rtp",port="10002",ssrc="987654321",stream_id="other_rtp",tcp_mode="1",vhost="__defaultVhost__"} 1
-# HELP zlm_rtp_server_total Total number of RTP servers
-# TYPE zlm_rtp_server_total gauge
-zlm_rtp_server_total 2
-# HELP zlm_scrape_errors_total Number of errors while scraping ZLMediaKit.
-# TYPE zlm_scrape_errors_total counter
-zlm_scrape_errors_total{endpoint="index/api/getAllSession"} 0
-zlm_scrape_errors_total{endpoint="index/api/getApiList"} 0
-zlm_scrape_errors_total{endpoint="index/api/getMediaList"} 0
-zlm_scrape_errors_total{endpoint="index/api/getStatistic"} 0
-zlm_scrape_errors_total{endpoint="index/api/getThreadsLoad"} 0
-zlm_scrape_errors_total{endpoint="index/api/getWorkThreadsLoad"} 0
-zlm_scrape_errors_total{endpoint="index/api/listRtpServer"} 0
-zlm_scrape_errors_total{endpoint="index/api/listStreamProxy"} 0
-zlm_scrape_errors_total{endpoint="index/api/listStreamPusherProxy"} 0
-zlm_scrape_errors_total{endpoint="index/api/version"} 0
-# HELP zlm_session_info Session info
-# TYPE zlm_session_info gauge
-zlm_session_info{id="177-77",identifier="177-77",local_ip="127.0.0.1",local_port="80",peer_ip="127.0.0.1",peer_port="55394",type="tcp",typeid="mediakit::HttpSession"} 1
-# HELP zlm_session_total Total number of sessions
-# TYPE zlm_session_total gauge
-zlm_session_total 1
+# HELP zlm_rtp_servers Number of RTP servers
+# TYPE zlm_rtp_servers gauge
+zlm_rtp_servers 2
+# HELP zlm_sessions Number of sessions, by session class and transport
+# TYPE zlm_sessions gauge
+zlm_sessions{type="tcp",typeid="mediakit::HttpSession"} 1
 # HELP zlm_statistics_buffer Statistics buffer
 # TYPE zlm_statistics_buffer gauge
 zlm_statistics_buffer 10
@@ -136,36 +115,39 @@ zlm_statistics_udp_server 16
 # HELP zlm_statistics_udp_session Statistics UdpSession
 # TYPE zlm_statistics_udp_session gauge
 zlm_statistics_udp_session 0
-# HELP zlm_stream_alive_second Stream alive second
-# TYPE zlm_stream_alive_second gauge
-zlm_stream_alive_second{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 7
-zlm_stream_alive_second{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 7
-zlm_stream_alive_second{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 7
-zlm_stream_alive_second{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 7
-# HELP zlm_stream_bitrate Stream bitrate
-# TYPE zlm_stream_bitrate gauge
-zlm_stream_bitrate{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 31156
-zlm_stream_bitrate{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 20680
-zlm_stream_bitrate{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 20984
-zlm_stream_bitrate{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 28624
+# HELP zlm_stream_alive_seconds Seconds the stream has been alive
+# TYPE zlm_stream_alive_seconds gauge
+zlm_stream_alive_seconds{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 7
+zlm_stream_alive_seconds{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 7
+zlm_stream_alive_seconds{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 7
+zlm_stream_alive_seconds{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 7
+# HELP zlm_stream_bytes_per_second Current stream throughput in bytes per second
+# TYPE zlm_stream_bytes_per_second gauge
+zlm_stream_bytes_per_second{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 31156
+zlm_stream_bytes_per_second{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 20680
+zlm_stream_bytes_per_second{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 20984
+zlm_stream_bytes_per_second{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 28624
 # HELP zlm_stream_bytes_total Total bytes transferred for the stream
 # TYPE zlm_stream_bytes_total counter
 zlm_stream_bytes_total{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 218094
 zlm_stream_bytes_total{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 144761
 zlm_stream_bytes_total{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 146891
 zlm_stream_bytes_total{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 200368
-# HELP zlm_stream_create_stamp Stream create stamp
-# TYPE zlm_stream_create_stamp gauge
-zlm_stream_create_stamp{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
-zlm_stream_create_stamp{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
-zlm_stream_create_stamp{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
-zlm_stream_create_stamp{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+# HELP zlm_stream_create_time_seconds Unix timestamp at which the stream was created
+# TYPE zlm_stream_create_time_seconds gauge
+zlm_stream_create_time_seconds{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+zlm_stream_create_time_seconds{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+zlm_stream_create_time_seconds{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
+zlm_stream_create_time_seconds{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 1.731424913e+09
 # HELP zlm_stream_info Stream basic information
 # TYPE zlm_stream_info gauge
 zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="fmp4",stream="test",vhost="__defaultVhost__"} 1
 zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1
 zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1
 zlm_stream_info{app="live",origin_type="rtsp_push",origin_url="rtsp://127.0.0.1:554/live/test",schema="ts",stream="test",vhost="__defaultVhost__"} 1
+# HELP zlm_stream_proxies Number of stream pull proxies
+# TYPE zlm_stream_proxies gauge
+zlm_stream_proxies 1
 # HELP zlm_stream_proxy_bytes_per_second Current receive rate of the stream pull proxy in bytes per second
 # TYPE zlm_stream_proxy_bytes_per_second gauge
 zlm_stream_proxy_bytes_per_second{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 20480
@@ -184,12 +166,9 @@ zlm_stream_proxy_repull_total{app="proxy",key="__defaultVhost__/proxy/camera1",s
 # HELP zlm_stream_proxy_status Stream pull proxy status as reported by ZLMediaKit (0: success)
 # TYPE zlm_stream_proxy_status gauge
 zlm_stream_proxy_status{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 0
-# HELP zlm_stream_proxy_total Total number of stream pull proxies
-# TYPE zlm_stream_proxy_total gauge
-zlm_stream_proxy_total 1
-# HELP zlm_stream_proxy_total_reader_count Total reader count of the proxied stream
-# TYPE zlm_stream_proxy_total_reader_count gauge
-zlm_stream_proxy_total_reader_count{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 3
+# HELP zlm_stream_proxy_total_readers Number of readers of the proxied stream
+# TYPE zlm_stream_proxy_total_readers gauge
+zlm_stream_proxy_total_readers{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 3
 # HELP zlm_stream_pusher_bytes_per_second Current send rate of the stream push proxy in bytes per second
 # TYPE zlm_stream_pusher_bytes_per_second gauge
 zlm_stream_pusher_bytes_per_second{app="live",key="__defaultVhost__/live/test",stream="test",vhost="__defaultVhost__"} 15360
@@ -208,15 +187,15 @@ zlm_stream_pusher_republish_total{app="live",key="__defaultVhost__/live/test",st
 # HELP zlm_stream_pusher_status Stream push proxy status as reported by ZLMediaKit (0: success)
 # TYPE zlm_stream_pusher_status gauge
 zlm_stream_pusher_status{app="live",key="__defaultVhost__/live/test",stream="test",vhost="__defaultVhost__"} 0
-# HELP zlm_stream_pusher_total Total number of stream push proxies
-# TYPE zlm_stream_pusher_total gauge
-zlm_stream_pusher_total 1
-# HELP zlm_stream_reader_count Stream reader count
-# TYPE zlm_stream_reader_count gauge
-zlm_stream_reader_count{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 0
-zlm_stream_reader_count{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 0
-zlm_stream_reader_count{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 0
-zlm_stream_reader_count{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 0
+# HELP zlm_stream_pushers Number of stream push proxies
+# TYPE zlm_stream_pushers gauge
+zlm_stream_pushers 1
+# HELP zlm_stream_readers Number of readers of the stream
+# TYPE zlm_stream_readers gauge
+zlm_stream_readers{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__"} 0
+zlm_stream_readers{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 0
+zlm_stream_readers{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 0
+zlm_stream_readers{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 0
 # HELP zlm_stream_recording Whether the stream is being recorded (1: recording, 0: not)
 # TYPE zlm_stream_recording gauge
 zlm_stream_recording{app="live",stream="test",type="hls",vhost="__defaultVhost__"} 1
@@ -227,19 +206,16 @@ zlm_stream_status{app="live",schema="fmp4",stream="test",vhost="__defaultVhost__
 zlm_stream_status{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 1
 zlm_stream_status{app="live",schema="rtsp",stream="test",vhost="__defaultVhost__"} 1
 zlm_stream_status{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 1
-# HELP zlm_stream_total Total number of streams
-# TYPE zlm_stream_total gauge
-zlm_stream_total 1
-# HELP zlm_stream_total_reader_count Total reader count across all schemas
-# TYPE zlm_stream_total_reader_count gauge
-zlm_stream_total_reader_count{app="live",stream="test",vhost="__defaultVhost__"} 0
+# HELP zlm_stream_total_readers Number of readers of the stream across all schemas
+# TYPE zlm_stream_total_readers gauge
+zlm_stream_total_readers{app="live",stream="test",vhost="__defaultVhost__"} 0
 # HELP zlm_stream_track_channels Audio track channel count
 # TYPE zlm_stream_track_channels gauge
 zlm_stream_track_channels{app="live",codec_name="mpeg4-generic",codec_type="audio",stream="test",track_index="0",vhost="__defaultVhost__"} 1
-# HELP zlm_stream_track_duration_milliseconds Track duration in milliseconds
-# TYPE zlm_stream_track_duration_milliseconds gauge
-zlm_stream_track_duration_milliseconds{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 5597
-zlm_stream_track_duration_milliseconds{app="live",codec_name="mpeg4-generic",codec_type="audio",stream="test",track_index="0",vhost="__defaultVhost__"} 3570
+# HELP zlm_stream_track_duration_seconds Track duration in seconds
+# TYPE zlm_stream_track_duration_seconds gauge
+zlm_stream_track_duration_seconds{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 5.597
+zlm_stream_track_duration_seconds{app="live",codec_name="mpeg4-generic",codec_type="audio",stream="test",track_index="0",vhost="__defaultVhost__"} 3.57
 # HELP zlm_stream_track_fps Video track frames per second
 # TYPE zlm_stream_track_fps gauge
 zlm_stream_track_fps{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 26
@@ -247,9 +223,9 @@ zlm_stream_track_fps{app="live",codec_name="H264",codec_type="video",stream="tes
 # TYPE zlm_stream_track_frames_total counter
 zlm_stream_track_frames_total{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 149
 zlm_stream_track_frames_total{app="live",codec_name="mpeg4-generic",codec_type="audio",stream="test",track_index="0",vhost="__defaultVhost__"} 187
-# HELP zlm_stream_track_gop_interval_milliseconds Video track GOP interval in milliseconds
-# TYPE zlm_stream_track_gop_interval_milliseconds gauge
-zlm_stream_track_gop_interval_milliseconds{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 801
+# HELP zlm_stream_track_gop_interval_seconds Video track GOP interval in seconds
+# TYPE zlm_stream_track_gop_interval_seconds gauge
+zlm_stream_track_gop_interval_seconds{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 0.801
 # HELP zlm_stream_track_gop_size Video track GOP size in frames
 # TYPE zlm_stream_track_gop_size gauge
 zlm_stream_track_gop_size{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 21
@@ -272,18 +248,35 @@ zlm_stream_track_sample_rate{app="live",codec_name="mpeg4-generic",codec_type="a
 # HELP zlm_stream_track_width Video track width in pixels
 # TYPE zlm_stream_track_width gauge
 zlm_stream_track_width{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 448
+# HELP zlm_streams Number of source streams
+# TYPE zlm_streams gauge
+zlm_streams 1
 # HELP zlm_up Was the last scrape of ZLMediaKit successful.
 # TYPE zlm_up gauge
 zlm_up 1
 # HELP zlm_version_info ZLMediaKit version info.
 # TYPE zlm_version_info gauge
-zlm_version_info{branchName="master",buildTime="2024-06-11T21:28:30",commitHash="c446f6b"} 1
-# HELP zlm_work_threads_delay_total Total of work threads delay
-# TYPE zlm_work_threads_delay_total gauge
-zlm_work_threads_delay_total 40
-# HELP zlm_work_threads_load_total Total of work threads load
-# TYPE zlm_work_threads_load_total gauge
-zlm_work_threads_load_total 100
-# HELP zlm_work_threads_total Total number of work threads
-# TYPE zlm_work_threads_total gauge
-zlm_work_threads_total 8
+zlm_version_info{branch_name="master",build_time="2024-06-11T21:28:30",commit_hash="c446f6b"} 1
+# HELP zlm_work_thread_delay_seconds Work thread task delay in seconds
+# TYPE zlm_work_thread_delay_seconds gauge
+zlm_work_thread_delay_seconds{index="0"} 0.005
+zlm_work_thread_delay_seconds{index="1"} 0.005
+zlm_work_thread_delay_seconds{index="2"} 0.005
+zlm_work_thread_delay_seconds{index="3"} 0.005
+zlm_work_thread_delay_seconds{index="4"} 0.005
+zlm_work_thread_delay_seconds{index="5"} 0.005
+zlm_work_thread_delay_seconds{index="6"} 0.005
+zlm_work_thread_delay_seconds{index="7"} 0.005
+# HELP zlm_work_thread_load_percent Work thread load in percent
+# TYPE zlm_work_thread_load_percent gauge
+zlm_work_thread_load_percent{index="0"} 0
+zlm_work_thread_load_percent{index="1"} 0
+zlm_work_thread_load_percent{index="2"} 0
+zlm_work_thread_load_percent{index="3"} 100
+zlm_work_thread_load_percent{index="4"} 0
+zlm_work_thread_load_percent{index="5"} 0
+zlm_work_thread_load_percent{index="6"} 0
+zlm_work_thread_load_percent{index="7"} 0
+# HELP zlm_work_threads Number of work threads
+# TYPE zlm_work_threads gauge
+zlm_work_threads 8

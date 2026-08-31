@@ -12,6 +12,7 @@ var apiStatus = newMetricDescr(SubsystemAPI, "status", "The status of API endpoi
 
 type apiStatusCollector struct{}
 
+func (apiStatusCollector) Name() string     { return "api" }
 func (apiStatusCollector) Endpoint() string { return zlmapi.EndpointGetAPIList }
 
 func (apiStatusCollector) Describe(ch chan<- *prometheus.Desc) {

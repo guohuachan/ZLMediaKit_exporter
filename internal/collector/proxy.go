@@ -21,13 +21,13 @@ var (
 		"Seconds the stream pull proxy has been alive", proxyLabels)
 	streamProxyRePullTotal = newMetricDescr(SubsystemStreamProxy, "repull_total",
 		"Number of times the stream pull proxy reconnected", proxyLabels)
-	streamProxyReaderCount = newMetricDescr(SubsystemStreamProxy, "total_reader_count",
-		"Total reader count of the proxied stream", proxyLabels)
+	streamProxyReaders = newMetricDescr(SubsystemStreamProxy, "total_readers",
+		"Number of readers of the proxied stream", proxyLabels)
 	streamProxyBytesPerSecond = newMetricDescr(SubsystemStreamProxy, "bytes_per_second",
 		"Current receive rate of the stream pull proxy in bytes per second", proxyLabels)
 	streamProxyBytesTotal = newMetricDescr(SubsystemStreamProxy, "bytes_total",
 		"Total bytes received by the stream pull proxy", proxyLabels)
-	streamProxyTotal = newMetricDescr(SubsystemStreamProxy, "total", "Total number of stream pull proxies", []string{})
+	streamProxies = newMetricDescr("", "stream_proxies", "Number of stream pull proxies", nil)
 
 	streamPusherInfo = newMetricDescr(SubsystemStreamPusher, "info", "Stream push proxy information",
 		[]string{"key", "vhost", "app", "stream", "url"})
@@ -41,17 +41,18 @@ var (
 		"Current send rate of the stream push proxy in bytes per second", proxyLabels)
 	streamPusherBytesTotal = newMetricDescr(SubsystemStreamPusher, "bytes_total",
 		"Total bytes sent by the stream push proxy", proxyLabels)
-	streamPusherTotal = newMetricDescr(SubsystemStreamPusher, "total", "Total number of stream push proxies", []string{})
+	streamPushers = newMetricDescr("", "stream_pushers", "Number of stream push proxies", nil)
 )
 
 type streamProxyCollector struct{}
 
+func (streamProxyCollector) Name() string     { return "stream_proxy" }
 func (streamProxyCollector) Endpoint() string { return zlmapi.EndpointListStreamProxy }
 
 func (streamProxyCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		streamProxyInfo, streamProxyStatus, streamProxyLiveSeconds, streamProxyRePullTotal,
-		streamProxyReaderCount, streamProxyBytesPerSecond, streamProxyBytesTotal, streamProxyTotal,
+		streamProxyReaders, streamProxyBytesPerSecond, streamProxyBytesTotal, streamProxies,
 	} {
 		ch <- d
 	}
@@ -71,22 +72,23 @@ func (streamProxyCollector) Collect(ctx context.Context, client *zlmapi.Client, 
 		ch <- prometheus.MustNewConstMetric(streamProxyStatus, prometheus.GaugeValue, p.Status, labels...)
 		ch <- prometheus.MustNewConstMetric(streamProxyLiveSeconds, prometheus.GaugeValue, p.LiveSecs, labels...)
 		ch <- prometheus.MustNewConstMetric(streamProxyRePullTotal, prometheus.CounterValue, p.RePullCount, labels...)
-		ch <- prometheus.MustNewConstMetric(streamProxyReaderCount, prometheus.GaugeValue, p.TotalReaderCount, labels...)
+		ch <- prometheus.MustNewConstMetric(streamProxyReaders, prometheus.GaugeValue, p.TotalReaderCount, labels...)
 		ch <- prometheus.MustNewConstMetric(streamProxyBytesPerSecond, prometheus.GaugeValue, p.BytesSpeed, labels...)
 		ch <- prometheus.MustNewConstMetric(streamProxyBytesTotal, prometheus.CounterValue, p.TotalBytes, labels...)
 	}
-	ch <- prometheus.MustNewConstMetric(streamProxyTotal, prometheus.GaugeValue, float64(len(data)))
+	ch <- prometheus.MustNewConstMetric(streamProxies, prometheus.GaugeValue, float64(len(data)))
 	return nil
 }
 
 type streamPusherCollector struct{}
 
+func (streamPusherCollector) Name() string     { return "stream_pusher" }
 func (streamPusherCollector) Endpoint() string { return zlmapi.EndpointListStreamPusherProxy }
 
 func (streamPusherCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		streamPusherInfo, streamPusherStatus, streamPusherLiveSeconds, streamPusherRePublishTotal,
-		streamPusherBytesPerSecond, streamPusherBytesTotal, streamPusherTotal,
+		streamPusherBytesPerSecond, streamPusherBytesTotal, streamPushers,
 	} {
 		ch <- d
 	}
@@ -109,6 +111,6 @@ func (streamPusherCollector) Collect(ctx context.Context, client *zlmapi.Client,
 		ch <- prometheus.MustNewConstMetric(streamPusherBytesPerSecond, prometheus.GaugeValue, p.BytesSpeed, labels...)
 		ch <- prometheus.MustNewConstMetric(streamPusherBytesTotal, prometheus.CounterValue, p.TotalBytes, labels...)
 	}
-	ch <- prometheus.MustNewConstMetric(streamPusherTotal, prometheus.GaugeValue, float64(len(data)))
+	ch <- prometheus.MustNewConstMetric(streamPushers, prometheus.GaugeValue, float64(len(data)))
 	return nil
 }

@@ -29,6 +29,7 @@ var (
 
 type statisticsCollector struct{}
 
+func (statisticsCollector) Name() string     { return "statistics" }
 func (statisticsCollector) Endpoint() string { return zlmapi.EndpointGetStatistic }
 
 func (statisticsCollector) Describe(ch chan<- *prometheus.Desc) {
