@@ -9,10 +9,11 @@ import (
 )
 
 var zlmediaKitInfo = newMetricDescr(SubsystemVersion, "info", "ZLMediaKit version info.",
-	[]string{"branchName", "buildTime", "commitHash"})
+	[]string{"branch_name", "build_time", "commit_hash"})
 
 type versionCollector struct{}
 
+func (versionCollector) Name() string     { return "version" }
 func (versionCollector) Endpoint() string { return zlmapi.EndpointVersion }
 
 func (versionCollector) Describe(ch chan<- *prometheus.Desc) {

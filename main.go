@@ -9,9 +9,11 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
+	versioncollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
@@ -78,7 +80,32 @@ var (
 	zlmTLSInsecureSkipVerify = kingpin.Flag("zlm.tls-insecure-skip-verify",
 		"Do not verify the ZlMediaKit TLS certificate (default false).").
 		Default(getEnv("ZLM_EXPORTER_TLS_INSECURE_SKIP_VERIFY", "false")).Bool()
+
+	zlmExposeAPIStatus = kingpin.Flag("zlm.expose-api-status",
+		"Expose zlm_api_status, one constant series per ZlMediaKit API endpoint (default false).").
+		Default(getEnv("ZLM_EXPORTER_EXPOSE_API_STATUS", "false")).Bool()
+	zlmExposeSessionInfo = kingpin.Flag("zlm.expose-session-info",
+		"Expose zlm_session_info, one series per connection (default false). "+
+			"zlm_sessions carries the aggregate either way.").
+		Default(getEnv("ZLM_EXPORTER_EXPOSE_SESSION_INFO", "false")).Bool()
+	zlmExposeStreamTracks = kingpin.Flag("zlm.expose-stream-tracks",
+		"Expose per-track stream metrics such as fps and resolution (default true).").
+		Default(getEnv("ZLM_EXPORTER_EXPOSE_STREAM_TRACKS", "true")).Bool()
+	zlmDisableCollectors = kingpin.Flag("zlm.disable-collectors",
+		"Comma-separated collectors to skip entirely, e.g. stream_proxy,stream_pusher.").
+		Default(getEnv("ZLM_EXPORTER_DISABLE_COLLECTORS", "")).String()
 )
+
+// splitCollectors parses the comma-separated --zlm.disable-collectors value.
+func splitCollectors(value string) []string {
+	var names []string
+	for _, name := range strings.Split(value, ",") {
+		if name = strings.TrimSpace(name); name != "" {
+			names = append(names, name)
+		}
+	}
+	return names
+}
 
 // logBuildInfo records the exporter build and runtime details as structured
 // fields. slog takes alternating key/value pairs, not a printf format string.
@@ -106,17 +133,28 @@ func main() {
 
 	logBuildInfo(logger)
 
+	disabledCollectors := splitCollectors(*zlmDisableCollectors)
+
 	logger.Info("configuration",
 		"timeout", *webTimeout,
 		"tls_insecure_skip_verify", *zlmTLSInsecureSkipVerify,
 		"zlm_api_url", *zlmApiURL,
 		"zlm_api_secret", maskSecret(*zlmApiSecret),
 		"metrics_path", *metricsPath,
-		"metrics_only", *metricOnly)
+		"metrics_only", *metricOnly,
+		"expose_api_status", *zlmExposeAPIStatus,
+		"expose_session_info", *zlmExposeSessionInfo,
+		"expose_stream_tracks", *zlmExposeStreamTracks,
+		"disabled_collectors", disabledCollectors)
 
 	exporter, err := collector.New(*zlmApiURL, *zlmApiSecret, logger, zlmapi.Options{
 		Timeout:            *webTimeout,
 		InsecureSkipVerify: *zlmTLSInsecureSkipVerify,
+	}, collector.Config{
+		ExposeAPIStatus:     *zlmExposeAPIStatus,
+		ExposeSessionInfo:   *zlmExposeSessionInfo,
+		DisableStreamTracks: !*zlmExposeStreamTracks,
+		DisabledCollectors:  disabledCollectors,
 	})
 	if err != nil {
 		logger.Error("failed to create new exporter", "error", err)
@@ -127,7 +165,7 @@ func main() {
 	if !*metricOnly {
 		registry = prometheus.DefaultRegisterer.(*prometheus.Registry)
 	}
-	registry.MustRegister(exporter)
+	registry.MustRegister(exporter, versioncollector.NewCollector("zlm_exporter"))
 	http.Handle(*metricsPath, promhttp.HandlerFor(registry, promhttp.HandlerOpts{
 		Timeout: *webTimeout,
 	}))

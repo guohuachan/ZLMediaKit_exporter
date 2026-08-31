@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -23,6 +24,10 @@ import (
 )
 
 const testSecret = "test-secret"
+
+// allCollectorsConfig enables everything, so tests that sweep the collector
+// set cover the opt-in ones too.
+var allCollectorsConfig = Config{ExposeAPIStatus: true, ExposeSessionInfo: true}
 
 // fixtureNames are the testdata/api files served by the mock ZLMediaKit server.
 var fixtureNames = []string{
@@ -124,13 +129,13 @@ func gatherText(t *testing.T, reg prometheus.Gatherer) string {
 func TestExporterGolden(t *testing.T) {
 	srv := newMockZLMServer(t)
 
-	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
+	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{}, Config{})
 	require.NoError(t, err)
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(exporter)
 
-	got := gatherText(t, reg)
+	got := normalizeVolatile(gatherText(t, reg))
 
 	golden := filepath.Join("testdata", "expected_metrics.prom")
 	if os.Getenv("UPDATE_GOLDEN") != "" {
@@ -142,8 +147,17 @@ func TestExporterGolden(t *testing.T) {
 	assert.Equal(t, string(want), got)
 }
 
+// scrapeDurationValue matches the timing value the golden cannot pin down.
+var scrapeDurationValue = regexp.MustCompile(`(zlm_exporter_scrape_duration_seconds\{[^}]*\}) [0-9.e+-]+`)
+
+// normalizeVolatile replaces measured durations with a placeholder so the
+// golden file compares the metric set rather than the clock.
+func normalizeVolatile(exposition string) string {
+	return scrapeDurationValue.ReplaceAllString(exposition, "$1 <duration>")
+}
+
 func TestExporterDescribe(t *testing.T) {
-	exporter, err := New("http://localhost", testSecret, testLogger(), zlmapi.Options{})
+	exporter, err := New("http://localhost", testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
 	require.NoError(t, err)
 
 	ch := make(chan *prometheus.Desc, 256)
@@ -157,13 +171,13 @@ func TestExporterDescribe(t *testing.T) {
 
 	for _, desc := range []*prometheus.Desc{
 		zlmediaKitInfo, apiStatus,
-		networkThreadsTotal, networkThreadsLoadTotal, networkThreadsDelayTotal,
-		workThreadsTotal, workThreadsLoadTotal, workThreadsDelayTotal,
+		networkThreads, networkThreadLoad, networkThreadDelay,
+		workThreads, workThreadLoad, workThreadDelay,
 		statisticsBuffer, statisticsUdpSession,
-		sessionInfo, sessionTotal,
-		streamsInfo, streamStatus, streamReaderCount, streamTotalReaderCount,
-		streamBitrate, streamAliveSecond, streamCreateStamp, streamTotal,
-		rtpServerInfo, rtpServerTotal,
+		sessionInfo, sessions,
+		streamsInfo, streamStatus, streamReaders, streamTotalReaders,
+		streamBytesPerSecond, streamAliveSeconds, streamCreateTime, streams,
+		rtpServerInfo, rtpServers,
 	} {
 		assert.True(t, described[desc.String()], "missing metric description: %s", desc)
 	}
@@ -196,7 +210,7 @@ func TestExporterReportsUp(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := tt.server(t)
 
-			exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
+			exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
 			require.NoError(t, err)
 
 			reg := prometheus.NewRegistry()
@@ -216,7 +230,7 @@ func TestCollectorsRejectBadResponses(t *testing.T) {
 		"data type mismatch": `{"code":0,"msg":"success","data":"invalid"}`,
 	}
 
-	exporter, err := New("http://localhost", testSecret, testLogger(), zlmapi.Options{})
+	exporter, err := New("http://localhost", testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
 	require.NoError(t, err)
 
 	for _, c := range exporter.collectors {
@@ -241,7 +255,7 @@ func TestCollectorsRejectBadResponses(t *testing.T) {
 func TestScrapeCountsErrorsPerEndpoint(t *testing.T) {
 	srv := newStaticServer(t, `{"code":1,"msg":"error"}`)
 
-	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
+	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
 	require.NoError(t, err)
 
 	ch := make(chan prometheus.Metric, 256)
@@ -252,8 +266,8 @@ func TestScrapeCountsErrorsPerEndpoint(t *testing.T) {
 	collectAll(ch)
 
 	for _, c := range exporter.collectors {
-		assert.Equal(t, 1.0, testutil.ToFloat64(exporter.scrapeErrors.WithLabelValues(c.Endpoint())),
-			"endpoint %s should have recorded one scrape error", c.Endpoint())
+		assert.Equal(t, 1.0, testutil.ToFloat64(exporter.scrapeErrors.WithLabelValues(c.Name())),
+			"collector %s should have recorded one scrape error", c.Name())
 	}
 }
 
@@ -334,30 +348,16 @@ func TestStreamTotalReaderCountLabelsMatchDescriptor(t *testing.T) {
 	srv := newMockZLMServer(t)
 
 	const expected = `
-# HELP zlm_stream_total_reader_count Total reader count across all schemas
-# TYPE zlm_stream_total_reader_count gauge
-zlm_stream_total_reader_count{app="live",stream="test",vhost="__defaultVhost__"} 0
+# HELP zlm_stream_total_readers Number of readers of the stream across all schemas
+# TYPE zlm_stream_total_readers gauge
+zlm_stream_total_readers{app="live",stream="test",vhost="__defaultVhost__"} 0
 `
 	err := testutil.CollectAndCompare(
-		newAdapter(t, streamCollector{}, srv.URL),
+		newAdapter(t, streamCollector{exposeTracks: true}, srv.URL),
 		strings.NewReader(expected),
-		"zlm_stream_total_reader_count",
+		"zlm_stream_total_readers",
 	)
 	assert.NoError(t, err)
-}
-
-// Bug: the scrape error counter was created but never registered, so failures
-// were invisible on /metrics.
-func TestScrapeErrorsAreExposed(t *testing.T) {
-	srv := newStaticServer(t, `{"code":1,"msg":"error"}`)
-
-	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
-	require.NoError(t, err)
-
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(exporter)
-
-	assert.Contains(t, gatherText(t, reg), `zlm_scrape_errors_total{endpoint="index/api/version"} 1`)
 }
 
 // stallingCollector runs past the scrape deadline without watching the
@@ -368,6 +368,7 @@ type stallingCollector struct {
 	finished atomic.Int64
 }
 
+func (*stallingCollector) Name() string                     { return "stalling" }
 func (*stallingCollector) Endpoint() string                 { return "test/stalling" }
 func (*stallingCollector) Describe(chan<- *prometheus.Desc) {}
 
@@ -381,7 +382,7 @@ func (c *stallingCollector) Collect(context.Context, *zlmapi.Client, chan<- prom
 // Bug: on timeout scrape() returned while its goroutines were still running,
 // so a late send raced with the closing of the metric channel.
 func TestCollectWaitsForEveryCollector(t *testing.T) {
-	exporter, err := New("http://127.0.0.1:1", testSecret, testLogger(), zlmapi.Options{})
+	exporter, err := New("http://127.0.0.1:1", testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
 	require.NoError(t, err)
 
 	stalling := &stallingCollector{delay: 300 * time.Millisecond}
@@ -412,11 +413,11 @@ func TestRtpCollectorReadsMasterShape(t *testing.T) {
 
 	assert.Contains(t, out, `zlm_rtp_server_info{app="rtp",port="10000",ssrc="1234567890",stream_id="test_rtp",tcp_mode="0",vhost="__defaultVhost__"} 1`)
 	assert.Contains(t, out, `zlm_rtp_server_info{app="rtp",port="10002",ssrc="987654321",stream_id="other_rtp",tcp_mode="1",vhost="__defaultVhost__"} 1`)
-	assert.Contains(t, out, "zlm_rtp_server_total 2")
+	assert.Contains(t, out, "zlm_rtp_servers 2")
 }
 
 func TestStreamCollectorReportsTotalBytes(t *testing.T) {
-	out := gatherCollectorText(t, streamCollector{}, newMockZLMServer(t).URL)
+	out := gatherCollectorText(t, streamCollector{exposeTracks: true}, newMockZLMServer(t).URL)
 
 	assert.Contains(t, out, `zlm_stream_bytes_total{app="live",schema="ts",stream="test",vhost="__defaultVhost__"} 200368`)
 	assert.Contains(t, out, `zlm_stream_bytes_total{app="live",schema="rtmp",stream="test",vhost="__defaultVhost__"} 144761`)
@@ -425,7 +426,7 @@ func TestStreamCollectorReportsTotalBytes(t *testing.T) {
 // Recording state belongs to the source stream, not to a schema, so it is
 // reported once per stream.
 func TestStreamCollectorReportsRecordingState(t *testing.T) {
-	out := gatherCollectorText(t, streamCollector{}, newMockZLMServer(t).URL)
+	out := gatherCollectorText(t, streamCollector{exposeTracks: true}, newMockZLMServer(t).URL)
 
 	assert.Contains(t, out, `zlm_stream_recording{app="live",stream="test",type="hls",vhost="__defaultVhost__"} 1`)
 	assert.Contains(t, out, `zlm_stream_recording{app="live",stream="test",type="mp4",vhost="__defaultVhost__"} 0`)
@@ -434,7 +435,7 @@ func TestStreamCollectorReportsRecordingState(t *testing.T) {
 // Tracks describe the source stream, so they must not be multiplied by the
 // number of schemas the stream is republished under.
 func TestStreamCollectorReportsTracksOncePerStream(t *testing.T) {
-	out := gatherCollectorText(t, streamCollector{}, newMockZLMServer(t).URL)
+	out := gatherCollectorText(t, streamCollector{exposeTracks: true}, newMockZLMServer(t).URL)
 
 	assert.Contains(t, out, `zlm_stream_track_fps{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 26`)
 	assert.Contains(t, out, `zlm_stream_track_width{app="live",codec_name="H264",codec_type="video",stream="test",track_index="1",vhost="__defaultVhost__"} 448`)
@@ -447,7 +448,7 @@ func TestStreamCollectorReportsTracksOncePerStream(t *testing.T) {
 }
 
 func TestSessionCollectorReportsTransportType(t *testing.T) {
-	out := gatherCollectorText(t, sessionCollector{}, newMockZLMServer(t).URL)
+	out := gatherCollectorText(t, sessionCollector{exposeInfo: true}, newMockZLMServer(t).URL)
 
 	assert.Contains(t, out, `type="tcp"`)
 }
@@ -461,7 +462,7 @@ func TestStreamProxyCollector(t *testing.T) {
 	assert.Contains(t, out, `zlm_stream_proxy_repull_total{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 2`)
 	assert.Contains(t, out, `zlm_stream_proxy_bytes_per_second{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 20480`)
 	assert.Contains(t, out, `zlm_stream_proxy_bytes_total{app="proxy",key="__defaultVhost__/proxy/camera1",stream="camera1",vhost="__defaultVhost__"} 736280`)
-	assert.Contains(t, out, "zlm_stream_proxy_total 1")
+	assert.Contains(t, out, "zlm_stream_proxies 1")
 }
 
 func TestStreamPusherProxyCollector(t *testing.T) {
@@ -470,7 +471,7 @@ func TestStreamPusherProxyCollector(t *testing.T) {
 	assert.Contains(t, out, `zlm_stream_pusher_info{app="live",key="__defaultVhost__/live/test",stream="test",url="rtmp://cdn.example.com/live/test",vhost="__defaultVhost__"} 1`)
 	assert.Contains(t, out, `zlm_stream_pusher_republish_total{app="live",key="__defaultVhost__/live/test",stream="test",vhost="__defaultVhost__"} 1`)
 	assert.Contains(t, out, `zlm_stream_pusher_bytes_total{app="live",key="__defaultVhost__/live/test",stream="test",vhost="__defaultVhost__"} 276480`)
-	assert.Contains(t, out, "zlm_stream_pusher_total 1")
+	assert.Contains(t, out, "zlm_stream_pushers 1")
 }
 
 // Older ZLMediaKit builds omit the newer fields and quoted the RTP port.
@@ -478,7 +479,7 @@ func TestStreamPusherProxyCollector(t *testing.T) {
 func TestCollectorsAcceptLegacyResponses(t *testing.T) {
 	srv := newLegacyMockZLMServer(t)
 
-	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{})
+	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
 	require.NoError(t, err)
 
 	for _, c := range exporter.collectors {
@@ -497,4 +498,97 @@ func TestCollectorsAcceptLegacyResponses(t *testing.T) {
 
 	out := gatherCollectorText(t, rtpCollector{}, srv.URL)
 	assert.Contains(t, out, `port="10000"`, "a string-typed port must still decode")
+}
+
+// TestMetricsFollowPrometheusNaming keeps the exposed names within the
+// Prometheus conventions: base units, _total reserved for counters.
+func TestMetricsFollowPrometheusNaming(t *testing.T) {
+	srv := newMockZLMServer(t)
+
+	exporter, err := New(srv.URL, testSecret, testLogger(), zlmapi.Options{}, allCollectorsConfig)
+	require.NoError(t, err)
+
+	problems, err := testutil.CollectAndLint(exporter)
+	require.NoError(t, err)
+
+	for _, p := range problems {
+		t.Errorf("%s: %s", p.Metric, p.Text)
+	}
+}
+
+func newTestExporter(t *testing.T, url string, cfg Config) *Exporter {
+	t.Helper()
+	exporter, err := New(url, testSecret, testLogger(), zlmapi.Options{}, cfg)
+	require.NoError(t, err)
+	return exporter
+}
+
+func gatherExporterText(t *testing.T, url string, cfg Config) string {
+	t.Helper()
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(newTestExporter(t, url, cfg))
+	return gatherText(t, reg)
+}
+
+// zlm_api_status emits one constant series per ZLMediaKit endpoint (~70) and
+// carries no signal, so it must be opt-in.
+func TestAPIStatusIsOptIn(t *testing.T) {
+	url := newMockZLMServer(t).URL
+
+	assert.NotContains(t, gatherExporterText(t, url, Config{}), "zlm_api_status")
+	assert.Contains(t, gatherExporterText(t, url, Config{ExposeAPIStatus: true}), "zlm_api_status")
+}
+
+// Per-session series are one time series per connection; the aggregate is
+// always available, the detail is opt-in.
+func TestSessionInfoIsOptInButAggregateIsAlways(t *testing.T) {
+	url := newMockZLMServer(t).URL
+
+	out := gatherExporterText(t, url, Config{})
+	assert.NotContains(t, out, "zlm_session_info")
+	assert.Contains(t, out, `zlm_sessions{type="tcp",typeid="mediakit::HttpSession"} 1`)
+
+	assert.Contains(t, gatherExporterText(t, url, Config{ExposeSessionInfo: true}), "zlm_session_info")
+}
+
+func TestStreamTracksCanBeDisabled(t *testing.T) {
+	url := newMockZLMServer(t).URL
+
+	assert.Contains(t, gatherExporterText(t, url, Config{}), "zlm_stream_track_fps")
+	assert.NotContains(t, gatherExporterText(t, url, Config{DisableStreamTracks: true}), "zlm_stream_track_fps")
+}
+
+func TestCollectorsCanBeDisabledByName(t *testing.T) {
+	url := newMockZLMServer(t).URL
+
+	out := gatherExporterText(t, url, Config{DisabledCollectors: []string{"stream_proxy", "stream_pusher"}})
+	assert.NotContains(t, out, "zlm_stream_proxy")
+	assert.NotContains(t, out, "zlm_stream_pusher")
+	assert.Contains(t, out, "zlm_streams", "unrelated collectors must stay enabled")
+}
+
+func TestExporterReportsPerCollectorScrapeHealth(t *testing.T) {
+	out := gatherExporterText(t, newMockZLMServer(t).URL, Config{})
+
+	assert.Contains(t, out, `zlm_exporter_collector_success{collector="stream"} 1`)
+	assert.Contains(t, out, `zlm_exporter_scrape_errors_total{collector="stream"} 0`)
+	assert.Contains(t, out, `zlm_exporter_scrape_duration_seconds{collector="stream"}`)
+
+	failing := gatherExporterText(t, newStaticServer(t, `{"code":1,"msg":"error"}`).URL, Config{})
+	assert.Contains(t, failing, `zlm_exporter_collector_success{collector="stream"} 0`)
+	assert.Contains(t, failing, `zlm_exporter_scrape_errors_total{collector="stream"} 1`)
+}
+
+// Thread load and delay are reported per thread; the old *_load_total and
+// *_delay_total aggregates are recoverable with sum().
+func TestThreadsReportedIndividually(t *testing.T) {
+	out := gatherExporterText(t, newMockZLMServer(t).URL, Config{})
+
+	assert.Contains(t, out, "zlm_network_threads 8")
+	assert.Contains(t, out, "zlm_work_threads 8")
+	assert.Contains(t, out, `zlm_work_thread_load_percent{index="3"} 100`)
+	assert.Contains(t, out, `zlm_work_thread_delay_seconds{index="3"} 0.005`)
+	assert.NotContains(t, out, "zlm_network_threads_load_total")
+	assert.NotContains(t, out, "zlm_work_threads_delay_total")
 }
