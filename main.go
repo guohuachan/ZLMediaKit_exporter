@@ -4,6 +4,7 @@
 package main
 
 import (
+	"log/slog"
 	"net/http"
 	"os"
 	"runtime"
@@ -61,8 +62,6 @@ var (
 	webFlagConfig = webflag.AddFlags(kingpin.CommandLine, getEnv("ZLM_EXPORTER_TELEMETRY_ADDRESS", ":9101"))
 	webTimeout    = kingpin.Flag("web.timeout", "Timeout for connection to ZlMediaKit instance (default 15s).").
 			Default(getEnv("ZLM_EXPORTER_TIMEOUT", "15s")).Duration()
-	webSSLVerify = kingpin.Flag("web.ssl-verify", "Enable SSL verification(default true).").
-			Default(getEnv("ZLM_EXPORTER_SSL_VERIFY", "true")).Bool()
 
 	metricsPath = kingpin.Flag("web.telemetry-path",
 		"Path under which to expose metrics (default /metrics)").
@@ -76,7 +75,23 @@ var (
 		Default(getEnv("ZLM_API_URL", "http://127.0.0.1")).String()
 	zlmApiSecret = kingpin.Flag("zlm.secret", "Secret for the access ZlMediaKit api(from ZLM_API_SECRET env or CLI flag).").
 			PlaceHolder("<secret>").String()
+	zlmTLSInsecureSkipVerify = kingpin.Flag("zlm.tls-insecure-skip-verify",
+		"Do not verify the ZlMediaKit TLS certificate (default false).").
+		Default(getEnv("ZLM_EXPORTER_TLS_INSECURE_SKIP_VERIFY", "false")).Bool()
 )
+
+// logBuildInfo records the exporter build and runtime details as structured
+// fields. slog takes alternating key/value pairs, not a printf format string.
+func logBuildInfo(logger *slog.Logger) {
+	logger.Info("ZLMediaKit metrics exporter",
+		"version", BuildVersion,
+		"build_date", BuildDate,
+		"commit_sha", BuildCommitSha,
+		"go_version", runtime.Version(),
+		"goos", runtime.GOOS,
+		"goarch", runtime.GOARCH,
+	)
+}
 
 func main() {
 	kingpin.Version(version.Print("zlm_exporter"))
@@ -89,23 +104,20 @@ func main() {
 		*zlmApiSecret = getEnv("ZLM_API_SECRET", "")
 	}
 
-	logger.Info("ZLMediaKit Metrics Exporter %s    build date: %s    sha1: %s    Go: %s    GOOS: %s    GOARCH: %s",
-		BuildVersion, BuildDate, BuildCommitSha,
-		runtime.Version(),
-		runtime.GOOS,
-		runtime.GOARCH,
-	)
+	logBuildInfo(logger)
 
-	logger.Info("Configuration")
-	logger.Info("web configuration",
+	logger.Info("configuration",
 		"timeout", *webTimeout,
-		"ssl_verify", *webSSLVerify,
+		"tls_insecure_skip_verify", *zlmTLSInsecureSkipVerify,
 		"zlm_api_url", *zlmApiURL,
 		"zlm_api_secret", maskSecret(*zlmApiSecret),
 		"metrics_path", *metricsPath,
 		"metrics_only", *metricOnly)
 
-	exporter, err := collector.New(*zlmApiURL, *zlmApiSecret, logger, zlmapi.Options{SSLVerify: *webSSLVerify})
+	exporter, err := collector.New(*zlmApiURL, *zlmApiSecret, logger, zlmapi.Options{
+		Timeout:            *webTimeout,
+		InsecureSkipVerify: *zlmTLSInsecureSkipVerify,
+	})
 	if err != nil {
 		logger.Error("failed to create new exporter", "error", err)
 		os.Exit(1)
